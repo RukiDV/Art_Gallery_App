@@ -352,6 +352,19 @@ describe("App", () => {
     expect(await screen.findByText("No favorites yet")).toBeInTheDocument();
   });
 
+  it("shows the Favorites page when /favorites is opened directly", async () => {
+    stubFetchWithArtPieces();
+
+    renderApp("/favorites");
+
+    expect(await screen.findByText("No favorites yet")).toBeInTheDocument();
+    expect(screen.queryByText("Page not found")).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Favorites" })).toHaveAttribute(
+      "aria-current",
+      "page"
+    );
+  });
+
   it("shows a loading message on /favorites while fetching", () => {
     vi.stubGlobal(
       "fetch",
