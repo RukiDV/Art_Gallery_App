@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router";
 
@@ -13,6 +13,7 @@ const artPieces: ArtPiece[] = [
     imageSource: "https://example.com/the-harvesters.jpg",
     year: "1565",
     genre: "Renaissance",
+    colors: ["#37412E", "#8D7332"],
   },
   {
     slug: "wheat-field-with-cypresses",
@@ -21,6 +22,7 @@ const artPieces: ArtPiece[] = [
     imageSource: "https://example.com/wheat-field.jpg",
     year: "1889",
     genre: "Landscape Painting",
+    colors: ["#718F98", "#9DA59E"],
   },
 ];
 
@@ -159,6 +161,31 @@ describe("ArtPieceDetailsPage", () => {
     expect(screen.getByText("Vincent van Gogh")).toBeInTheDocument();
     expect(screen.getByText("1889")).toBeInTheDocument();
     expect(screen.getByText("Landscape Painting")).toBeInTheDocument();
+  });
+
+  it("shows the color palette of the art piece", () => {
+    renderDetails("wheat-field-with-cypresses");
+
+    const palette = screen.getByRole("list", { name: "Color palette" });
+
+    expect(within(palette).getAllByRole("listitem")).toHaveLength(2);
+    expect(within(palette).getByTitle("#718F98")).toBeInTheDocument();
+    expect(within(palette).getByTitle("#9DA59E")).toBeInTheDocument();
+  });
+
+  it("does not show the colors of another art piece", () => {
+    renderDetails("wheat-field-with-cypresses");
+
+    expect(screen.queryByTitle("#37412E")).not.toBeInTheDocument();
+    expect(screen.queryByTitle("#8D7332")).not.toBeInTheDocument();
+  });
+
+  it("shows no color palette for an unknown slug", () => {
+    renderDetails("does-not-exist");
+
+    expect(
+      screen.queryByRole("list", { name: "Color palette" })
+    ).not.toBeInTheDocument();
   });
 
   it("does not show another art piece", () => {

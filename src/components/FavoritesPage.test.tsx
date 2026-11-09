@@ -13,6 +13,7 @@ const artPieces: ArtPiece[] = [
     imageSource: "https://example.com/the-harvesters.jpg",
     year: "1565",
     genre: "Renaissance",
+    colors: ["#37412E", "#8D7332"],
   },
   {
     slug: "wheat-field-with-cypresses",
@@ -21,6 +22,7 @@ const artPieces: ArtPiece[] = [
     imageSource: "https://example.com/wheat-field.jpg",
     year: "1889",
     genre: "Landscape Painting",
+    colors: ["#718F98", "#9DA59E"],
   },
 ];
 

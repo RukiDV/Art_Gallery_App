@@ -11,6 +11,7 @@ const artPiece: ArtPiece = {
   imageSource: "https://example.com/the-harvesters.jpg",
   year: "1565",
   genre: "Renaissance",
+  colors: ["#37412E", "#8D7332"],
 };
 
 function renderPreview() {

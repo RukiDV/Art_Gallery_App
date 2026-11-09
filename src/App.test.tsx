@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { SWRConfig } from "swr";
@@ -15,6 +15,7 @@ const artPieces: ArtPiece[] = [
     imageSource: "https://example.com/the-harvesters.jpg",
     year: "1565",
     genre: "Renaissance",
+    colors: ["#37412E", "#8D7332"],
   },
   {
     slug: "wheat-field-with-cypresses",
@@ -23,6 +24,7 @@ const artPieces: ArtPiece[] = [
     imageSource: "https://example.com/wheat-field.jpg",
     year: "1889",
     genre: "Landscape Painting",
+    colors: ["#718F98", "#9DA59E"],
   },
 ];
 
@@ -183,7 +185,9 @@ describe("App", () => {
     expect(screen.getByText("Pieter Bruegel the Elder")).toBeInTheDocument();
     expect(screen.getByText("1565")).toBeInTheDocument();
     expect(screen.getByText("Renaissance")).toBeInTheDocument();
-    expect(screen.queryByRole("list")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: /Wheat Field with Cypresses/ })
+    ).not.toBeInTheDocument();
   });
 
   it('shows "Art piece not found" for an unknown slug', async () => {
@@ -206,7 +210,9 @@ describe("App", () => {
 
     expect(await screen.findByText("1889")).toBeInTheDocument();
     expect(screen.getByText("Landscape Painting")).toBeInTheDocument();
-    expect(screen.queryByRole("list")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: /The Harvesters/ })
+    ).not.toBeInTheDocument();
   });
 
   it("goes back to the gallery after clicking Back on the details page", async () => {
@@ -445,10 +451,22 @@ describe("App", () => {
 
     renderApp("/art-pieces/the-harvesters");
     await screen.findByRole("heading", { name: "Comments" });
+    const itemsBefore = screen.queryAllByRole("listitem").length;
     await addComment(user, "");
     await addComment(user, "   ");
 
-    expect(screen.queryAllByRole("listitem")).toHaveLength(0);
+    expect(screen.queryAllByRole("listitem")).toHaveLength(itemsBefore);
+  });
+
+  it("shows the color palette of the art piece on its details page", async () => {
+    stubFetchWithArtPieces();
+
+    renderApp("/art-pieces/the-harvesters");
+
+    const palette = await screen.findByRole("list", { name: "Color palette" });
+    expect(within(palette).getAllByRole("listitem")).toHaveLength(2);
+    expect(within(palette).getByTitle("#37412E")).toBeInTheDocument();
+    expect(within(palette).getByTitle("#8D7332")).toBeInTheDocument();
   });
 
   it("keeps the favorite status when a comment is added", async () => {

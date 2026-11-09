@@ -9,6 +9,7 @@ const artPieces: ArtPiece[] = ["first", "second", "third"].map((slug) => ({
   imageSource: `https://example.com/${slug}.jpg`,
   year: "1900",
   genre: "Genre",
+  colors: ["#000000"],
 }));
 
 afterEach(() => {
