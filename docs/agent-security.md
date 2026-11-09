@@ -3,6 +3,7 @@
 Settings that this project has before I start working with a coding agent.
 
 ## Checklist
+
 - [ ] `.env` and other secret files are in `.gitignore`
 - [ ] `.claude/settings.json` has deny rules for secret files and for network commands
 - [ ] I work in Manual mode or Plan mode (recommended) and check the mode at every start
