@@ -9,7 +9,12 @@
     "build": "vite build",
     "serve": "vite preview",
     "check": "tsc --noEmit",
-    "test": "vitest"
+    "test": "vitest",
+    "test:run": "vitest run",
+    "coverage": "vitest run --coverage",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "dependencies": {
     "react": "19.3.1",
@@ -18,15 +23,21 @@
     "swr": "^2.3.0"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.0",
     "@testing-library/react": "^16.1.0",
     "@testing-library/user-event": "^14.5.2",
-    "@testing-library/dom": "^10.4.0",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "@vitejs/plugin-react": "^4.3.1",
+    "@vitest/coverage-v8": "^2.1.9",
+    "eslint": "^10.14.0",
+    "eslint-plugin-sonarjs": "^4.2.2",
     "jsdom": "^25.0.1",
+    "prettier": "^3.9.10",
     "typescript": "^5.6.0",
+    "typescript-eslint": "^8.72.1",
     "vite": "^5.4.2",
     "vitest": "^2.1.9"
   }
