@@ -45,6 +45,20 @@ A coverage threshold or a coverage gate in CI or Sonar, changing or merging exis
 - New tests for behavior that already works pass on first run, so they cannot be "red" first. To show each new test really checks something, confirm it fails against a deliberately broken version of the code (reverted right after) before keeping it.
 - If a new test would need a code change to pass, that is a finding and not part of this issue: stop and ask.
 
+## Audit result
+
+`npm run coverage` before the audit: 110 tests, all files 96.13% statements and 97.53% branches.
+
+- All ten components in `src/components` are at 100% statements, branches, functions and lines, including the five named in the issue (`SpotlightPage`, `ArtPiecePreview`, `ArtPieceList`, `Navigation`, `ArtPieceDetailsPage`).
+- Not covered: `src/index.tsx` (the entry file that mounts the app; already excluded from coverage in `sonar-project.properties`), `src/types.ts` (types only) and one branch in `src/App.tsx`.
+- The one real gap: `App.tsx` line 47, the `: info` branch of the state update. It is reached only when a piece that already has stored info is changed while another piece also has stored info. No test did that: every test changed one piece at a time, or added a second piece through the "append" path.
+- Added a test in `App.test.tsx`: "only changes the art piece whose favorite button is clicked" (favorite A, favorite B, unfavorite A: A is not pressed, B stays pressed).
+- Mutation check: replacing the update with one that changes every stored entry makes exactly this test fail and nothing else; the real code passes. The first version of the test passed against the broken code (it only reached the append path), so it was rewritten before being kept.
+- A second gap that line coverage cannot show: the "oldest first" order of comments chosen in #10 was only tested for rendering a given list, never for adding two comments through `App`. Added "lists comments oldest first" in `App.test.tsx` (add two comments, they appear first then second). Mutation check: changing `addComment` to prepend makes exactly this test fail; the real code passes.
+- After: 112 tests, `App.tsx` at 100% branches, all files 98.78% branches.
+- Nothing else needed: the remaining uncovered code is the entry file and a types-only file, and trimming, whitespace, persistence and the not-found states are already tested at both component and `App` level.
+- No application code changed, and no coverage threshold was added.
+
 ## Verification
 
 `npm run coverage` (report read, `coverage/` not committed), then `npm run test:run`, `npm run lint`, `npm run format:check`, `npm run check`, `npm run build`.
