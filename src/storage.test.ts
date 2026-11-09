@@ -46,6 +46,91 @@ describe("loadArtPiecesInfo", () => {
   });
 });
 
+describe("loadArtPiecesInfo with broken entries", () => {
+  const validComment = {
+    text: "What a view!",
+    date: "2026-11-09T10:15:00.000Z",
+  };
+
+  it.each([
+    ["null", null],
+    ["a number", 1],
+    ["a string", "text"],
+    ["a list", []],
+    ["an entry without a slug", { isFavorite: true, comments: [] }],
+    [
+      "an entry with a number as slug",
+      { slug: 1, isFavorite: true, comments: [] },
+    ],
+    ["an entry without isFavorite", { slug: "x", comments: [] }],
+    [
+      "an entry with a text as isFavorite",
+      { slug: "x", isFavorite: "yes", comments: [] },
+    ],
+    ["an entry without comments", { slug: "x", isFavorite: true }],
+    [
+      "an entry with a text as comments",
+      { slug: "x", isFavorite: true, comments: "none" },
+    ],
+    [
+      "an entry with a comment that is null",
+      { slug: "x", isFavorite: true, comments: [null] },
+    ],
+    [
+      "an entry with a comment without text",
+      { slug: "x", isFavorite: true, comments: [{ date: validComment.date }] },
+    ],
+    [
+      "an entry with a comment with a number as text",
+      {
+        slug: "x",
+        isFavorite: true,
+        comments: [{ text: 5, date: validComment.date }],
+      },
+    ],
+    [
+      "an entry with a comment without date",
+      { slug: "x", isFavorite: true, comments: [{ text: "Hi" }] },
+    ],
+    [
+      "an entry with a comment with a number as date",
+      { slug: "x", isFavorite: true, comments: [{ text: "Hi", date: 5 }] },
+    ],
+  ])("ignores %s", (_description, brokenEntry) => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify([brokenEntry]));
+
+    expect(loadArtPiecesInfo()).toEqual([]);
+  });
+
+  it("keeps the valid entries of a list that also has broken entries", () => {
+    const brokenCommentEntry = {
+      slug: "broken",
+      isFavorite: true,
+      comments: [{ text: "no date" }],
+    };
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify([null, info[0], 1, brokenCommentEntry, info[1]])
+    );
+
+    expect(loadArtPiecesInfo()).toEqual([info[0], info[1]]);
+  });
+
+  it("keeps an entry with several valid comments untouched", () => {
+    const entry = {
+      slug: "the-harvesters",
+      isFavorite: false,
+      comments: [
+        validComment,
+        { text: "Second", date: "2026-11-10T08:00:00.000Z" },
+      ],
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify([entry]));
+
+    expect(loadArtPiecesInfo()).toEqual([entry]);
+  });
+});
+
 describe("saveArtPiecesInfo", () => {
   it("stores the list as JSON under one key", () => {
     saveArtPiecesInfo(info);

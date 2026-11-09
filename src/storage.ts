@@ -1,6 +1,28 @@
-import type { ArtPieceInfo } from "./types";
+import type { ArtPieceComment, ArtPieceInfo } from "./types";
 
 export const STORAGE_KEY = "art-pieces-info";
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function isArtPieceComment(value: unknown): value is ArtPieceComment {
+  return (
+    isRecord(value) &&
+    typeof value.text === "string" &&
+    typeof value.date === "string"
+  );
+}
+
+function isArtPieceInfo(value: unknown): value is ArtPieceInfo {
+  return (
+    isRecord(value) &&
+    typeof value.slug === "string" &&
+    typeof value.isFavorite === "boolean" &&
+    Array.isArray(value.comments) &&
+    value.comments.every(isArtPieceComment)
+  );
+}
 
 export function loadArtPiecesInfo(): ArtPieceInfo[] {
   try {
@@ -10,7 +32,7 @@ export function loadArtPiecesInfo(): ArtPieceInfo[] {
     }
 
     const parsedValue: unknown = JSON.parse(storedValue);
-    return Array.isArray(parsedValue) ? parsedValue : [];
+    return Array.isArray(parsedValue) ? parsedValue.filter(isArtPieceInfo) : [];
   } catch {
     return [];
   }
