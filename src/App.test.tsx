@@ -5,6 +5,7 @@ import { SWRConfig } from "swr";
 
 import App from "./App";
 import { mockRandomFraction } from "./mockRandom";
+import { STORAGE_KEY } from "./storage";
 import type { ArtPiece } from "./types";
 
 const artPieces: ArtPiece[] = [
@@ -29,7 +30,7 @@ const artPieces: ArtPiece[] = [
 ];
 
 function renderApp(route: string) {
-  render(
+  return render(
     <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>
       <MemoryRouter initialEntries={[route]}>
         <App />
@@ -500,5 +501,101 @@ describe("App", () => {
     expect(
       screen.getByRole("button", { name: "Favorite The Harvesters" })
     ).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("keeps a favorite after the app is reloaded", async () => {
+    const user = userEvent.setup();
+    stubFetchWithArtPieces();
+
+    const firstVisit = renderApp("/art-pieces");
+    await user.click(
+      await screen.findByRole("button", { name: "Favorite The Harvesters" })
+    );
+    firstVisit.unmount();
+
+    renderApp("/art-pieces");
+
+    expect(
+      await screen.findByRole("button", { name: "Favorite The Harvesters" })
+    ).toHaveAttribute("aria-pressed", "true");
+    expect(
+      screen.getByRole("button", {
+        name: "Favorite Wheat Field with Cypresses",
+      })
+    ).toHaveAttribute("aria-pressed", "false");
+  });
+
+  it("keeps a comment after the app is reloaded", async () => {
+    const user = userEvent.setup();
+    stubFetchWithArtPieces();
+
+    const firstVisit = renderApp("/art-pieces/the-harvesters");
+    await screen.findByRole("heading", { name: "Comments" });
+    await addComment(user, "Still here after a reload");
+    firstVisit.unmount();
+
+    renderApp("/art-pieces/the-harvesters");
+
+    expect(
+      await screen.findByText("Still here after a reload")
+    ).toBeInTheDocument();
+  });
+
+  it("lists a favorite on /favorites after the app is reloaded", async () => {
+    const user = userEvent.setup();
+    stubFetchWithArtPieces();
+
+    const firstVisit = renderApp("/art-pieces");
+    await user.click(
+      await screen.findByRole("button", { name: "Favorite The Harvesters" })
+    );
+    firstVisit.unmount();
+
+    renderApp("/favorites");
+
+    expect(await screen.findAllByRole("listitem")).toHaveLength(1);
+    expect(
+      screen.getByRole("heading", { name: "The Harvesters" })
+    ).toBeInTheDocument();
+  });
+
+  it("keeps the removal of a favorite after the app is reloaded", async () => {
+    const user = userEvent.setup();
+    stubFetchWithArtPieces();
+
+    const firstVisit = renderApp("/art-pieces");
+    const button = await screen.findByRole("button", {
+      name: "Favorite The Harvesters",
+    });
+    await user.click(button);
+    await user.click(button);
+    firstVisit.unmount();
+
+    renderApp("/art-pieces");
+
+    expect(
+      await screen.findByRole("button", { name: "Favorite The Harvesters" })
+    ).toHaveAttribute("aria-pressed", "false");
+  });
+
+  it("works without any stored data", async () => {
+    stubFetchWithArtPieces();
+
+    renderApp("/art-pieces");
+
+    const buttons = await screen.findAllByRole("button");
+    expect(buttons).toHaveLength(2);
+    buttons.forEach((button) =>
+      expect(button).toHaveAttribute("aria-pressed", "false")
+    );
+  });
+
+  it("works when the stored data is broken", async () => {
+    localStorage.setItem(STORAGE_KEY, "{this is not json");
+    stubFetchWithArtPieces();
+
+    renderApp("/art-pieces");
+
+    expect(await screen.findAllByRole("listitem")).toHaveLength(2);
   });
 });

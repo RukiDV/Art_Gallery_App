@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { Route, Routes } from "react-router";
 import useSWR from "swr";
 
@@ -8,6 +8,7 @@ import FavoritesPage from "./components/FavoritesPage";
 import Navigation from "./components/Navigation";
 import SpotlightPage from "./components/SpotlightPage";
 import { fetcher } from "./fetcher";
+import { loadArtPiecesInfo, saveArtPiecesInfo } from "./storage";
 import "./styles.css";
 import type { ArtPiece, ArtPieceComment, ArtPieceInfo } from "./types";
 
@@ -19,7 +20,12 @@ export default function App() {
     isLoading,
     error,
   } = useSWR<ArtPiece[], Error>(ART_PIECES_URL, fetcher);
-  const [artPiecesInfo, setArtPiecesInfo] = useState<ArtPieceInfo[]>([]);
+  const [artPiecesInfo, setArtPiecesInfo] =
+    useState<ArtPieceInfo[]>(loadArtPiecesInfo);
+
+  useEffect(() => {
+    saveArtPiecesInfo(artPiecesInfo);
+  }, [artPiecesInfo]);
 
   function isFavorite(slug: string): boolean {
     return artPiecesInfo.some((info) => info.slug === slug && info.isFavorite);
