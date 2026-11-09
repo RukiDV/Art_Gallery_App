@@ -33,7 +33,7 @@ export default async function createIssues({ github, context, core }) {
 
       core.notice(`Issue created: ${title}`);
     } catch (error) {
-      core.error(`Error creating issue ${title}`);
+      core.error(`Error creating issue ${title}: ${error.message}`);
     }
   }
 }
