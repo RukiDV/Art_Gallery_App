@@ -300,4 +300,80 @@ describe("App", () => {
       screen.queryByText("Pieter Bruegel the Elder")
     ).not.toBeInTheDocument();
   });
+
+  it('shows the Favorites page after clicking "Favorites"', async () => {
+    const user = userEvent.setup();
+    stubFetchWithArtPieces();
+
+    renderApp("/");
+    await user.click(await screen.findByRole("link", { name: "Favorites" }));
+
+    expect(await screen.findByText("No favorites yet")).toBeInTheDocument();
+    expect(screen.queryByRole("list")).not.toBeInTheDocument();
+  });
+
+  it("lists only the art pieces marked as favorite on /favorites", async () => {
+    const user = userEvent.setup();
+    stubFetchWithArtPieces();
+
+    renderApp("/art-pieces");
+    await user.click(
+      await screen.findByRole("button", { name: "Favorite The Harvesters" })
+    );
+    await user.click(screen.getByRole("link", { name: "Favorites" }));
+
+    expect(await screen.findAllByRole("listitem")).toHaveLength(1);
+    expect(
+      screen.getByRole("heading", { name: "The Harvesters" })
+    ).toBeInTheDocument();
+    expect(screen.getByText("Pieter Bruegel the Elder")).toBeInTheDocument();
+    expect(
+      screen.getByRole("img", { name: "The Harvesters" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Favorite The Harvesters" })
+    ).toHaveAttribute("aria-pressed", "true");
+    expect(screen.queryByText("Vincent van Gogh")).not.toBeInTheDocument();
+  });
+
+  it("removes an art piece from /favorites when its favorite button is clicked", async () => {
+    const user = userEvent.setup();
+    stubFetchWithArtPieces();
+
+    renderApp("/art-pieces");
+    await user.click(
+      await screen.findByRole("button", { name: "Favorite The Harvesters" })
+    );
+    await user.click(screen.getByRole("link", { name: "Favorites" }));
+    await user.click(
+      await screen.findByRole("button", { name: "Favorite The Harvesters" })
+    );
+
+    expect(await screen.findByText("No favorites yet")).toBeInTheDocument();
+  });
+
+  it("shows the Favorites page when /favorites is opened directly", async () => {
+    stubFetchWithArtPieces();
+
+    renderApp("/favorites");
+
+    expect(await screen.findByText("No favorites yet")).toBeInTheDocument();
+    expect(screen.queryByText("Page not found")).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Favorites" })).toHaveAttribute(
+      "aria-current",
+      "page"
+    );
+  });
+
+  it("shows a loading message on /favorites while fetching", () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => new Promise(() => {}))
+    );
+
+    renderApp("/favorites");
+
+    expect(screen.getByText(/loading/i)).toBeInTheDocument();
+    expect(screen.queryByText("Page not found")).not.toBeInTheDocument();
+  });
 });
