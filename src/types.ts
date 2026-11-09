@@ -5,6 +5,7 @@ export type ArtPiece = {
   imageSource: string;
   year: string;
   genre: string;
+  colors: string[];
 };
 
 export type ArtPieceComment = {
