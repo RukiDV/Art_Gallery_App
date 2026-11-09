@@ -46,7 +46,21 @@ function stubFetchWithArtPieces() {
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
+  vi.useRealTimers();
 });
+
+async function addComment(
+  user: ReturnType<typeof userEvent.setup>,
+  text: string
+) {
+  if (text !== "") {
+    await user.type(
+      screen.getByRole("textbox", { name: "Your comment" }),
+      text
+    );
+  }
+  await user.click(screen.getByRole("button", { name: "Add comment" }));
+}
 
 describe("App", () => {
   it("shows a loading message while the art pieces are being fetched", () => {
@@ -375,5 +389,98 @@ describe("App", () => {
 
     expect(screen.getByText(/loading/i)).toBeInTheDocument();
     expect(screen.queryByText("Page not found")).not.toBeInTheDocument();
+  });
+
+  it("adds a comment with its date and time on the details page", async () => {
+    const user = userEvent.setup();
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-09T10:15:00.000Z"));
+    stubFetchWithArtPieces();
+
+    renderApp("/art-pieces/the-harvesters");
+    await screen.findByRole("heading", { name: "Comments" });
+    await addComment(user, "What a beautiful sky!");
+
+    expect(screen.getByText("What a beautiful sky!")).toBeInTheDocument();
+    expect(
+      screen.getByText(new Date("2026-11-09T10:15:00.000Z").toLocaleString())
+    ).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Your comment" })).toHaveValue(
+      ""
+    );
+  });
+
+  it("keeps comments with the art piece they were written for", async () => {
+    const user = userEvent.setup();
+    stubFetchWithArtPieces();
+
+    renderApp("/art-pieces/the-harvesters");
+    await screen.findByRole("heading", { name: "Comments" });
+    await addComment(user, "A comment for the harvesters");
+    await user.click(screen.getByRole("link", { name: "Back" }));
+    await user.click(
+      await screen.findByRole("link", { name: /Wheat Field with Cypresses/ })
+    );
+
+    expect(
+      await screen.findByRole("heading", { name: "Comments" })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText("A comment for the harvesters")
+    ).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("link", { name: "Back" }));
+    await user.click(
+      await screen.findByRole("link", { name: /The Harvesters/ })
+    );
+
+    expect(
+      await screen.findByText("A comment for the harvesters")
+    ).toBeInTheDocument();
+  });
+
+  it("does not add an empty comment or a comment with only spaces", async () => {
+    const user = userEvent.setup();
+    stubFetchWithArtPieces();
+
+    renderApp("/art-pieces/the-harvesters");
+    await screen.findByRole("heading", { name: "Comments" });
+    await addComment(user, "");
+    await addComment(user, "   ");
+
+    expect(screen.queryAllByRole("listitem")).toHaveLength(0);
+  });
+
+  it("keeps the favorite status when a comment is added", async () => {
+    const user = userEvent.setup();
+    stubFetchWithArtPieces();
+
+    renderApp("/art-pieces/the-harvesters");
+    await user.click(
+      await screen.findByRole("button", { name: "Favorite The Harvesters" })
+    );
+    await addComment(user, "Nice!");
+
+    expect(
+      screen.getByRole("button", { name: "Favorite The Harvesters" })
+    ).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByText("Nice!")).toBeInTheDocument();
+  });
+
+  it("keeps a comment when the art piece is marked as favorite afterwards", async () => {
+    const user = userEvent.setup();
+    stubFetchWithArtPieces();
+
+    renderApp("/art-pieces/the-harvesters");
+    await screen.findByRole("heading", { name: "Comments" });
+    await addComment(user, "Nice!");
+    await user.click(
+      screen.getByRole("button", { name: "Favorite The Harvesters" })
+    );
+
+    expect(screen.getByText("Nice!")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Favorite The Harvesters" })
+    ).toHaveAttribute("aria-pressed", "true");
   });
 });

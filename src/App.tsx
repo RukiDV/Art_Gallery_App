@@ -9,7 +9,7 @@ import Navigation from "./components/Navigation";
 import SpotlightPage from "./components/SpotlightPage";
 import { fetcher } from "./fetcher";
 import "./styles.css";
-import type { ArtPiece, ArtPieceInfo } from "./types";
+import type { ArtPiece, ArtPieceComment, ArtPieceInfo } from "./types";
 
 const ART_PIECES_URL = "https://example-apis.vercel.app/api/art";
 
@@ -25,16 +25,34 @@ export default function App() {
     return artPiecesInfo.some((info) => info.slug === slug && info.isFavorite);
   }
 
-  function toggleFavorite(slug: string) {
+  function getComments(slug: string): ArtPieceComment[] {
+    return artPiecesInfo.find((info) => info.slug === slug)?.comments ?? [];
+  }
+
+  function updateInfo(
+    slug: string,
+    update: (info: ArtPieceInfo) => ArtPieceInfo
+  ) {
     setArtPiecesInfo((current) => {
       if (!current.some((info) => info.slug === slug)) {
-        return [...current, { slug, isFavorite: true }];
+        return [...current, update({ slug, isFavorite: false, comments: [] })];
       }
 
-      return current.map((info) =>
-        info.slug === slug ? { ...info, isFavorite: !info.isFavorite } : info
-      );
+      return current.map((info) => (info.slug === slug ? update(info) : info));
     });
+  }
+
+  function toggleFavorite(slug: string) {
+    updateInfo(slug, (info) => ({ ...info, isFavorite: !info.isFavorite }));
+  }
+
+  function addComment(slug: string, text: string) {
+    const comment: ArtPieceComment = { text, date: new Date().toISOString() };
+
+    updateInfo(slug, (info) => ({
+      ...info,
+      comments: [...info.comments, comment],
+    }));
   }
 
   function withArtPieces(render: (artPieces: ArtPiece[]) => ReactNode) {
@@ -81,6 +99,8 @@ export default function App() {
                 artPieces={loaded}
                 isFavorite={isFavorite}
                 onToggleFavorite={toggleFavorite}
+                getComments={getComments}
+                onAddComment={addComment}
               />
             ))}
           />
