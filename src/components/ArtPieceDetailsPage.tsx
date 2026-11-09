@@ -1,13 +1,18 @@
 import { Link, useParams } from "react-router";
 
 import type { ArtPiece } from "../types";
+import FavoriteButton from "./FavoriteButton";
 
 type ArtPieceDetailsPageProps = {
   artPieces: ArtPiece[];
+  isFavorite: (slug: string) => boolean;
+  onToggleFavorite: (slug: string) => void;
 };
 
 export default function ArtPieceDetailsPage({
   artPieces,
+  isFavorite,
+  onToggleFavorite,
 }: ArtPieceDetailsPageProps) {
   const { slug } = useParams();
   const artPiece = artPieces.find((piece) => piece.slug === slug);
@@ -20,6 +25,11 @@ export default function ArtPieceDetailsPage({
     <article className="details">
       <Link to="/art-pieces">Back</Link>
       <img src={artPiece.imageSource} alt={artPiece.name} />
+      <FavoriteButton
+        artPieceName={artPiece.name}
+        isFavorite={isFavorite(artPiece.slug)}
+        onToggle={() => onToggleFavorite(artPiece.slug)}
+      />
       <h2>{artPiece.name}</h2>
       <p>{artPiece.artist}</p>
       <p>{artPiece.year}</p>

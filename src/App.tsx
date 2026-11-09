@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import { Route, Routes } from "react-router";
 import useSWR from "swr";
 
@@ -8,7 +8,7 @@ import Navigation from "./components/Navigation";
 import SpotlightPage from "./components/SpotlightPage";
 import { fetcher } from "./fetcher";
 import "./styles.css";
-import type { ArtPiece } from "./types";
+import type { ArtPiece, ArtPieceInfo } from "./types";
 
 const ART_PIECES_URL = "https://example-apis.vercel.app/api/art";
 
@@ -18,6 +18,23 @@ export default function App() {
     isLoading,
     error,
   } = useSWR<ArtPiece[], Error>(ART_PIECES_URL, fetcher);
+  const [artPiecesInfo, setArtPiecesInfo] = useState<ArtPieceInfo[]>([]);
+
+  function isFavorite(slug: string): boolean {
+    return artPiecesInfo.some((info) => info.slug === slug && info.isFavorite);
+  }
+
+  function toggleFavorite(slug: string) {
+    setArtPiecesInfo((current) => {
+      if (!current.some((info) => info.slug === slug)) {
+        return [...current, { slug, isFavorite: true }];
+      }
+
+      return current.map((info) =>
+        info.slug === slug ? { ...info, isFavorite: !info.isFavorite } : info
+      );
+    });
+  }
 
   function withArtPieces(render: (artPieces: ArtPiece[]) => ReactNode) {
     if (error) {
@@ -39,19 +56,31 @@ export default function App() {
           <Route
             path="/"
             element={withArtPieces((loaded) => (
-              <SpotlightPage artPieces={loaded} />
+              <SpotlightPage
+                artPieces={loaded}
+                isFavorite={isFavorite}
+                onToggleFavorite={toggleFavorite}
+              />
             ))}
           />
           <Route
             path="/art-pieces"
             element={withArtPieces((loaded) => (
-              <ArtPieceList artPieces={loaded} />
+              <ArtPieceList
+                artPieces={loaded}
+                isFavorite={isFavorite}
+                onToggleFavorite={toggleFavorite}
+              />
             ))}
           />
           <Route
             path="/art-pieces/:slug"
             element={withArtPieces((loaded) => (
-              <ArtPieceDetailsPage artPieces={loaded} />
+              <ArtPieceDetailsPage
+                artPieces={loaded}
+                isFavorite={isFavorite}
+                onToggleFavorite={toggleFavorite}
+              />
             ))}
           />
           <Route path="*" element={<p>Page not found</p>} />

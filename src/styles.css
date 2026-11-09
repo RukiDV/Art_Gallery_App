@@ -90,6 +90,10 @@ nav a.active {
   color: #d6336c;
 }
 
+.details {
+  position: relative;
+}
+
 .details img {
   width: 100%;
   max-height: 32rem;

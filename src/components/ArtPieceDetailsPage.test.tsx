@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router";
 
 import type { ArtPiece } from "../types";
@@ -23,13 +24,23 @@ const artPieces: ArtPiece[] = [
   },
 ];
 
-function renderDetails(slug: string) {
+function renderDetails(
+  slug: string,
+  isFavorite: (slug: string) => boolean = () => false,
+  onToggleFavorite: (slug: string) => void = () => {}
+) {
   render(
     <MemoryRouter initialEntries={[`/art-pieces/${slug}`]}>
       <Routes>
         <Route
           path="/art-pieces/:slug"
-          element={<ArtPieceDetailsPage artPieces={artPieces} />}
+          element={
+            <ArtPieceDetailsPage
+              artPieces={artPieces}
+              isFavorite={isFavorite}
+              onToggleFavorite={onToggleFavorite}
+            />
+          }
         />
       </Routes>
     </MemoryRouter>
@@ -37,6 +48,30 @@ function renderDetails(slug: string) {
 }
 
 describe("ArtPieceDetailsPage", () => {
+  it("shows a favorite button for the art piece", () => {
+    renderDetails(
+      "wheat-field-with-cypresses",
+      (favoriteSlug) => favoriteSlug === "wheat-field-with-cypresses"
+    );
+
+    expect(
+      screen.getByRole("button", {
+        name: "Favorite Wheat Field with Cypresses",
+      })
+    ).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("reports the slug of the art piece when the button is clicked", async () => {
+    const user = userEvent.setup();
+    const onToggleFavorite = vi.fn();
+    renderDetails("wheat-field-with-cypresses", () => false, onToggleFavorite);
+
+    await user.click(screen.getByRole("button"));
+
+    expect(onToggleFavorite).toHaveBeenCalledTimes(1);
+    expect(onToggleFavorite).toHaveBeenCalledWith("wheat-field-with-cypresses");
+  });
+
   it("shows the image of the art piece with the given slug", () => {
     renderDetails("wheat-field-with-cypresses");
 
