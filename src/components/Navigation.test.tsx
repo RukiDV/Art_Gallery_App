@@ -53,4 +53,28 @@ describe("Navigation", () => {
     expect(spotlight).not.toHaveAttribute("aria-current");
     expect(spotlight).not.toHaveClass("active");
   });
+
+  it('shows a "Favorites" link to the favorites page after the other links', () => {
+    renderNavigation("/");
+
+    const links = screen.getAllByRole("link");
+
+    expect(links.map((link) => link.textContent)).toEqual([
+      "Spotlight",
+      "Gallery",
+      "Favorites",
+    ]);
+    expect(links[2]).toHaveAttribute("href", "/favorites");
+  });
+
+  it("highlights only the Favorites link on /favorites", () => {
+    renderNavigation("/favorites");
+
+    const current = screen
+      .getAllByRole("link")
+      .filter((link) => link.getAttribute("aria-current") === "page");
+
+    expect(current.map((link) => link.textContent)).toEqual(["Favorites"]);
+    expect(current[0]).toHaveClass("active");
+  });
 });
