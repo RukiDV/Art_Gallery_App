@@ -627,6 +627,47 @@ describe("App", () => {
     );
   });
 
+  it("ignores broken entries in the stored data and keeps the valid ones", async () => {
+    const user = userEvent.setup();
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify([
+        null,
+        1,
+        {
+          slug: "the-harvesters",
+          isFavorite: true,
+          comments: [
+            {
+              text: "Saved before the reload",
+              date: "2026-11-09T10:15:00.000Z",
+            },
+          ],
+        },
+        { slug: "wheat-field-with-cypresses", isFavorite: "yes", comments: [] },
+      ])
+    );
+    stubFetchWithArtPieces();
+
+    renderApp("/art-pieces");
+
+    expect(await screen.findAllByRole("listitem")).toHaveLength(2);
+    expect(
+      screen.getByRole("button", { name: "Favorite The Harvesters" })
+    ).toHaveAttribute("aria-pressed", "true");
+    expect(
+      screen.getByRole("button", {
+        name: "Favorite Wheat Field with Cypresses",
+      })
+    ).toHaveAttribute("aria-pressed", "false");
+
+    await user.click(screen.getByRole("link", { name: /The Harvesters/ }));
+
+    expect(
+      await screen.findByText("Saved before the reload")
+    ).toBeInTheDocument();
+  });
+
   it("works when the stored data is broken", async () => {
     localStorage.setItem(STORAGE_KEY, "{this is not json");
     stubFetchWithArtPieces();
