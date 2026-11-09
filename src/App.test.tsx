@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { SWRConfig } from "swr";
 
@@ -28,6 +29,13 @@ function renderApp(route: string) {
         <App />
       </MemoryRouter>
     </SWRConfig>
+  );
+}
+
+function stubFetchWithArtPieces() {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn().mockResolvedValue({ ok: true, json: async () => artPieces })
   );
 }
 
@@ -97,5 +105,76 @@ describe("App", () => {
     renderApp("/");
 
     expect(screen.getByText(/loading/i)).toBeInTheDocument();
+  });
+
+  it.each(["/", "/art-pieces"])(
+    "shows the navigation exactly once on %s, even while loading",
+    (route) => {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(() => new Promise(() => {}))
+      );
+
+      renderApp(route);
+
+      expect(screen.getAllByRole("navigation")).toHaveLength(1);
+    }
+  );
+
+  it("shows a not found message and the navigation on an unknown URL", async () => {
+    stubFetchWithArtPieces();
+
+    renderApp("/does-not-exist");
+
+    expect(await screen.findByText("Page not found")).toBeInTheDocument();
+    expect(screen.getByRole("navigation")).toBeInTheDocument();
+  });
+
+  it("shows the not found message on an unknown URL while the art pieces are loading", () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => new Promise(() => {}))
+    );
+
+    renderApp("/does-not-exist");
+
+    expect(screen.getByText("Page not found")).toBeInTheDocument();
+    expect(screen.queryByText(/loading/i)).not.toBeInTheDocument();
+  });
+
+  it("shows the not found message on an unknown URL when fetching fails", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({ ok: false, status: 500 })
+    );
+
+    renderApp("/does-not-exist");
+
+    expect(await screen.findByText("Page not found")).toBeInTheDocument();
+    expect(screen.queryByText(/failed/i)).not.toBeInTheDocument();
+  });
+
+  it('shows the Gallery page after clicking "Gallery"', async () => {
+    const user = userEvent.setup();
+    stubFetchWithArtPieces();
+
+    renderApp("/");
+    await user.click(await screen.findByRole("link", { name: "Gallery" }));
+
+    expect(await screen.findAllByRole("listitem")).toHaveLength(2);
+  });
+
+  it('shows the Spotlight page after clicking "Spotlight"', async () => {
+    const user = userEvent.setup();
+    mockRandomFraction(0.99);
+    stubFetchWithArtPieces();
+
+    renderApp("/art-pieces");
+    await user.click(await screen.findByRole("link", { name: "Spotlight" }));
+
+    expect(
+      await screen.findByRole("img", { name: "Wheat Field with Cypresses" })
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("list")).not.toBeInTheDocument();
   });
 });

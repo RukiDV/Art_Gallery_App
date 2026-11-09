@@ -1,7 +1,9 @@
+import type { ReactNode } from "react";
 import { Route, Routes } from "react-router";
 import useSWR from "swr";
 
 import ArtPieceList from "./components/ArtPieceList";
+import Navigation from "./components/Navigation";
 import SpotlightPage from "./components/SpotlightPage";
 import { fetcher } from "./fetcher";
 import "./styles.css";
@@ -16,28 +18,39 @@ export default function App() {
     error,
   } = useSWR<ArtPiece[], Error>(ART_PIECES_URL, fetcher);
 
-  let content;
+  function withArtPieces(render: (artPieces: ArtPiece[]) => ReactNode) {
+    if (error) {
+      return <p>Failed to load the art pieces. Please try again later.</p>;
+    }
 
-  if (error) {
-    content = <p>Failed to load the art pieces. Please try again later.</p>;
-  } else if (isLoading || !artPieces) {
-    content = <p>Loading art pieces…</p>;
-  } else {
-    content = (
-      <Routes>
-        <Route path="/" element={<SpotlightPage artPieces={artPieces} />} />
-        <Route
-          path="/art-pieces"
-          element={<ArtPieceList artPieces={artPieces} />}
-        />
-      </Routes>
-    );
+    if (isLoading || !artPieces) {
+      return <p>Loading art pieces…</p>;
+    }
+
+    return render(artPieces);
   }
 
   return (
-    <main>
-      <h1>Art Gallery</h1>
-      {content}
-    </main>
+    <>
+      <main>
+        <h1>Art Gallery</h1>
+        <Routes>
+          <Route
+            path="/"
+            element={withArtPieces((loaded) => (
+              <SpotlightPage artPieces={loaded} />
+            ))}
+          />
+          <Route
+            path="/art-pieces"
+            element={withArtPieces((loaded) => (
+              <ArtPieceList artPieces={loaded} />
+            ))}
+          />
+          <Route path="*" element={<p>Page not found</p>} />
+        </Routes>
+      </main>
+      <Navigation />
+    </>
   );
 }
