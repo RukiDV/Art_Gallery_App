@@ -13,12 +13,16 @@ const artPieces: ArtPiece[] = [
     artist: "Pieter Bruegel the Elder",
     name: "The Harvesters",
     imageSource: "https://example.com/the-harvesters.jpg",
+    year: "1565",
+    genre: "Renaissance",
   },
   {
     slug: "wheat-field-with-cypresses",
     artist: "Vincent van Gogh",
     name: "Wheat Field with Cypresses",
     imageSource: "https://example.com/wheat-field.jpg",
+    year: "1889",
+    genre: "Landscape Painting",
   },
 ];
 
@@ -152,6 +156,53 @@ describe("App", () => {
 
     expect(await screen.findByText("Page not found")).toBeInTheDocument();
     expect(screen.queryByText(/failed/i)).not.toBeInTheDocument();
+  });
+
+  it("shows the details of an art piece on /art-pieces/:slug", async () => {
+    stubFetchWithArtPieces();
+
+    renderApp("/art-pieces/the-harvesters");
+
+    expect(
+      await screen.findByRole("heading", { name: "The Harvesters" })
+    ).toBeInTheDocument();
+    expect(screen.getByText("Pieter Bruegel the Elder")).toBeInTheDocument();
+    expect(screen.getByText("1565")).toBeInTheDocument();
+    expect(screen.getByText("Renaissance")).toBeInTheDocument();
+    expect(screen.queryByRole("list")).not.toBeInTheDocument();
+  });
+
+  it('shows "Art piece not found" for an unknown slug', async () => {
+    stubFetchWithArtPieces();
+
+    renderApp("/art-pieces/does-not-exist");
+
+    expect(await screen.findByText("Art piece not found")).toBeInTheDocument();
+    expect(screen.queryByText("Page not found")).not.toBeInTheDocument();
+  });
+
+  it("opens the details after clicking an art piece in the gallery", async () => {
+    const user = userEvent.setup();
+    stubFetchWithArtPieces();
+
+    renderApp("/art-pieces");
+    await user.click(
+      await screen.findByRole("link", { name: /Wheat Field with Cypresses/ })
+    );
+
+    expect(await screen.findByText("1889")).toBeInTheDocument();
+    expect(screen.getByText("Landscape Painting")).toBeInTheDocument();
+    expect(screen.queryByRole("list")).not.toBeInTheDocument();
+  });
+
+  it("goes back to the gallery after clicking Back on the details page", async () => {
+    const user = userEvent.setup();
+    stubFetchWithArtPieces();
+
+    renderApp("/art-pieces/the-harvesters");
+    await user.click(await screen.findByRole("link", { name: "Back" }));
+
+    expect(await screen.findAllByRole("listitem")).toHaveLength(2);
   });
 
   it('shows the Gallery page after clicking "Gallery"', async () => {

@@ -7,6 +7,8 @@ const artPieces: ArtPiece[] = ["first", "second", "third"].map((slug) => ({
   artist: `Artist ${slug}`,
   name: `Name ${slug}`,
   imageSource: `https://example.com/${slug}.jpg`,
+  year: "1900",
+  genre: "Genre",
 }));
 
 afterEach(() => {

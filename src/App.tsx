@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Route, Routes } from "react-router";
 import useSWR from "swr";
 
+import ArtPieceDetailsPage from "./components/ArtPieceDetailsPage";
 import ArtPieceList from "./components/ArtPieceList";
 import Navigation from "./components/Navigation";
 import SpotlightPage from "./components/SpotlightPage";
@@ -45,6 +46,12 @@ export default function App() {
             path="/art-pieces"
             element={withArtPieces((loaded) => (
               <ArtPieceList artPieces={loaded} />
+            ))}
+          />
+          <Route
+            path="/art-pieces/:slug"
+            element={withArtPieces((loaded) => (
+              <ArtPieceDetailsPage artPieces={loaded} />
             ))}
           />
           <Route path="*" element={<p>Page not found</p>} />
