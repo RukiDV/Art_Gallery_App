@@ -270,6 +270,25 @@ describe("App", () => {
     expect(harvesters).toHaveAttribute("aria-pressed", "false");
   });
 
+  it("only changes the art piece whose favorite button is clicked", async () => {
+    const user = userEvent.setup();
+    stubFetchWithArtPieces();
+
+    renderApp("/art-pieces");
+    const harvesters = await screen.findByRole("button", {
+      name: "Favorite The Harvesters",
+    });
+    const wheatField = screen.getByRole("button", {
+      name: "Favorite Wheat Field with Cypresses",
+    });
+    await user.click(harvesters);
+    await user.click(wheatField);
+    await user.click(harvesters);
+
+    expect(harvesters).toHaveAttribute("aria-pressed", "false");
+    expect(wheatField).toHaveAttribute("aria-pressed", "true");
+  });
+
   it("shows a favorite from the gallery as a favorite on its details page", async () => {
     const user = userEvent.setup();
     stubFetchWithArtPieces();
@@ -415,6 +434,24 @@ describe("App", () => {
     expect(screen.getByRole("textbox", { name: "Your comment" })).toHaveValue(
       ""
     );
+  });
+
+  it("lists comments oldest first", async () => {
+    const user = userEvent.setup();
+    stubFetchWithArtPieces();
+
+    renderApp("/art-pieces/the-harvesters");
+    await screen.findByRole("heading", { name: "Comments" });
+    await addComment(user, "first comment");
+    await addComment(user, "second comment");
+
+    const comments = screen
+      .getAllByRole("listitem")
+      .filter((item) => item.querySelector("time") !== null);
+
+    expect(comments).toHaveLength(2);
+    expect(comments[0]).toHaveTextContent("first comment");
+    expect(comments[1]).toHaveTextContent("second comment");
   });
 
   it("keeps comments with the art piece they were written for", async () => {
