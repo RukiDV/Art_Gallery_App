@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 
 import { mockRandomFraction } from "../mockRandom";
 import type { ArtPiece } from "../types";
@@ -27,11 +28,24 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+function spotlight(
+  isFavorite: (slug: string) => boolean = () => false,
+  onToggleFavorite: (slug: string) => void = () => {}
+) {
+  return (
+    <SpotlightPage
+      artPieces={artPieces}
+      isFavorite={isFavorite}
+      onToggleFavorite={onToggleFavorite}
+    />
+  );
+}
+
 describe("SpotlightPage", () => {
   it("shows the image of the selected art piece", () => {
     mockRandomFraction(0.99);
 
-    render(<SpotlightPage artPieces={artPieces} />);
+    render(spotlight());
 
     const image = screen.getByRole("img", {
       name: "Wheat Field with Cypresses",
@@ -42,7 +56,7 @@ describe("SpotlightPage", () => {
   it("shows the artist of the selected art piece and no other", () => {
     mockRandomFraction(0.99);
 
-    render(<SpotlightPage artPieces={artPieces} />);
+    render(spotlight());
 
     expect(screen.getByText("Vincent van Gogh")).toBeInTheDocument();
     expect(
@@ -53,12 +67,37 @@ describe("SpotlightPage", () => {
 
   it("keeps the same art piece when it re-renders", () => {
     const setRandomFraction = mockRandomFraction(0);
-    const { rerender } = render(<SpotlightPage artPieces={artPieces} />);
+    const { rerender } = render(spotlight());
 
     setRandomFraction(0.99);
-    rerender(<SpotlightPage artPieces={artPieces} />);
+    rerender(spotlight());
 
     expect(screen.getByText("Pieter Bruegel the Elder")).toBeInTheDocument();
     expect(screen.queryByText("Vincent van Gogh")).not.toBeInTheDocument();
+  });
+
+  it("shows a favorite button for the selected art piece", () => {
+    mockRandomFraction(0.99);
+
+    render(spotlight((slug) => slug === "wheat-field-with-cypresses"));
+
+    expect(
+      screen.getByRole("button", {
+        name: "Favorite Wheat Field with Cypresses",
+      })
+    ).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getAllByRole("button")).toHaveLength(1);
+  });
+
+  it("reports the slug of the selected art piece when the button is clicked", async () => {
+    const user = userEvent.setup();
+    const onToggleFavorite = vi.fn();
+    mockRandomFraction(0.99);
+    render(spotlight(() => false, onToggleFavorite));
+
+    await user.click(screen.getByRole("button"));
+
+    expect(onToggleFavorite).toHaveBeenCalledTimes(1);
+    expect(onToggleFavorite).toHaveBeenCalledWith("wheat-field-with-cypresses");
   });
 });

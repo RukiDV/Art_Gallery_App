@@ -6,3 +6,8 @@ export type ArtPiece = {
   year: string;
   genre: string;
 };
+
+export type ArtPieceInfo = {
+  slug: string;
+  isFavorite: boolean;
+};

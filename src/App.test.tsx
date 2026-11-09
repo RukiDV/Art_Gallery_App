@@ -228,4 +228,76 @@ describe("App", () => {
     ).toBeInTheDocument();
     expect(screen.queryByRole("list")).not.toBeInTheDocument();
   });
+
+  it("marks an art piece as favorite and removes the mark with a second click", async () => {
+    const user = userEvent.setup();
+    stubFetchWithArtPieces();
+
+    renderApp("/art-pieces");
+    const harvesters = await screen.findByRole("button", {
+      name: "Favorite The Harvesters",
+    });
+    const wheatField = screen.getByRole("button", {
+      name: "Favorite Wheat Field with Cypresses",
+    });
+
+    await user.click(harvesters);
+    expect(harvesters).toHaveAttribute("aria-pressed", "true");
+    expect(wheatField).toHaveAttribute("aria-pressed", "false");
+
+    await user.click(harvesters);
+    expect(harvesters).toHaveAttribute("aria-pressed", "false");
+  });
+
+  it("shows a favorite from the gallery as a favorite on its details page", async () => {
+    const user = userEvent.setup();
+    stubFetchWithArtPieces();
+
+    renderApp("/art-pieces");
+    await user.click(
+      await screen.findByRole("button", { name: "Favorite The Harvesters" })
+    );
+    await user.click(screen.getByRole("link", { name: /The Harvesters/ }));
+
+    expect(
+      await screen.findByRole("button", { name: "Favorite The Harvesters" })
+    ).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("shows a favorite from the details page as a favorite in the gallery", async () => {
+    const user = userEvent.setup();
+    stubFetchWithArtPieces();
+
+    renderApp("/art-pieces/the-harvesters");
+    await user.click(
+      await screen.findByRole("button", { name: "Favorite The Harvesters" })
+    );
+    await user.click(screen.getByRole("link", { name: "Back" }));
+
+    expect(
+      await screen.findByRole("button", { name: "Favorite The Harvesters" })
+    ).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("keeps the spotlight art piece when it is marked as favorite", async () => {
+    const user = userEvent.setup();
+    const setRandomFraction = mockRandomFraction(0.99);
+    stubFetchWithArtPieces();
+
+    renderApp("/");
+    const button = await screen.findByRole("button", {
+      name: "Favorite Wheat Field with Cypresses",
+    });
+    setRandomFraction(0);
+    await user.click(button);
+
+    expect(
+      screen.getByRole("button", {
+        name: "Favorite Wheat Field with Cypresses",
+      })
+    ).toHaveAttribute("aria-pressed", "true");
+    expect(
+      screen.queryByText("Pieter Bruegel the Elder")
+    ).not.toBeInTheDocument();
+  });
 });

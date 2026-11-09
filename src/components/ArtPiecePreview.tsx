@@ -1,12 +1,19 @@
 import { Link } from "react-router";
 
 import type { ArtPiece } from "../types";
+import FavoriteButton from "./FavoriteButton";
 
 type ArtPiecePreviewProps = {
   artPiece: ArtPiece;
+  isFavorite: boolean;
+  onToggleFavorite: () => void;
 };
 
-export default function ArtPiecePreview({ artPiece }: ArtPiecePreviewProps) {
+export default function ArtPiecePreview({
+  artPiece,
+  isFavorite,
+  onToggleFavorite,
+}: ArtPiecePreviewProps) {
   return (
     <figure className="art-piece">
       <Link to={`/art-pieces/${artPiece.slug}`}>
@@ -16,6 +23,11 @@ export default function ArtPiecePreview({ artPiece }: ArtPiecePreviewProps) {
           <p>{artPiece.artist}</p>
         </figcaption>
       </Link>
+      <FavoriteButton
+        artPieceName={artPiece.name}
+        isFavorite={isFavorite}
+        onToggle={onToggleFavorite}
+      />
     </figure>
   );
 }
