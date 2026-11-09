@@ -4,6 +4,7 @@ import useSWR from "swr";
 
 import ArtPieceDetailsPage from "./components/ArtPieceDetailsPage";
 import ArtPieceList from "./components/ArtPieceList";
+import FavoritesPage from "./components/FavoritesPage";
 import Navigation from "./components/Navigation";
 import SpotlightPage from "./components/SpotlightPage";
 import { fetcher } from "./fetcher";
@@ -77,6 +78,16 @@ export default function App() {
             path="/art-pieces/:slug"
             element={withArtPieces((loaded) => (
               <ArtPieceDetailsPage
+                artPieces={loaded}
+                isFavorite={isFavorite}
+                onToggleFavorite={toggleFavorite}
+              />
+            ))}
+          />
+          <Route
+            path="/favorites"
+            element={withArtPieces((loaded) => (
+              <FavoritesPage
                 artPieces={loaded}
                 isFavorite={isFavorite}
                 onToggleFavorite={toggleFavorite}
