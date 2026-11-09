@@ -1,6 +1,6 @@
 ---
 name: open-pr
-description: Finalize a feature branch and open a pull request that closes the given issue. Verifies the branch, runs checks, commits in small steps, pushes and runs gh pr create.
+description: Finalize a feature branch and open a pull request that closes the given issue. Verifies the branch, runs checks, commits in small steps, has the reviewer agent review the branch, pushes and runs gh pr create.
 argument-hint: <issue-number>
 disable-model-invocation: true
 ---
@@ -27,11 +27,21 @@ Group changes into small, logical commits (e.g. test + implementation for one be
 - Stage specific files (`git add <paths>`), never blindly `git add -A`; skip unrelated or sensitive files and mention them.
 - Use a clear message in the imperative mood and the project's convention (e.g. `feat: add artwork filter (#$ARGUMENTS)`), explaining the why when not obvious.
 
-## 4. Push
+## 4. Review the branch
+
+Run this after the commits, because the reviewer only sees committed changes (`git diff main...HEAD`).
+
+1. Launch the `reviewer` agent (Agent tool, `subagent_type: "reviewer"`). Tell it the issue number `$ARGUMENTS` and the plan file `docs/plans/$ARGUMENTS-<slug>.md` if one exists. The reviewer is read-only and reports; it never edits files.
+2. Show the user its verdict, blocking issues, non-blocking suggestions and AC coverage.
+3. If there are blocking issues, **stop**: do not push or open a PR. Fix them (test first, small commits) or ask the user, then run the checks from step 2 again and repeat this review.
+4. Non-blocking suggestions: list them and let the user decide which to apply. Do not apply them on your own.
+5. Continue to the push only when the verdict is "ready" or "ready with minor fixes" and the user agrees.
+
+## 5. Push
 
 `git push -u origin <current-branch>`
 
-## 5. Open the PR
+## 6. Open the PR
 
 Run `gh pr create` with a title and a body containing:
 
