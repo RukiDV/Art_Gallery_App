@@ -153,16 +153,22 @@ describe("ThemeToggle", () => {
 });
 
 describe("ThemeToggle: circular reveal", () => {
-  type FakeTransition = { finished: Promise<void> };
+  type FakeTransition = { finished: Promise<void>; ready: Promise<void> };
   const root = document.documentElement;
 
   function stubViewTransition(finished: Promise<void> = Promise.resolve()) {
     const startViewTransition = vi.fn((update: () => void): FakeTransition => {
       update();
-      return { finished };
+      return { finished, ready: Promise.resolve() };
     });
     Object.assign(document, { startViewTransition });
     return startViewTransition;
+  }
+
+  function stubAnimate() {
+    const animate = vi.fn();
+    Object.assign(root, { animate });
+    return animate;
   }
 
   function stubReducedMotion() {
@@ -178,11 +184,17 @@ describe("ThemeToggle: circular reveal", () => {
     );
   }
 
+  function expectedRadius(x: number, y: number) {
+    return Math.hypot(
+      Math.max(x, window.innerWidth - x),
+      Math.max(y, window.innerHeight - y)
+    );
+  }
+
   afterEach(() => {
     Reflect.deleteProperty(document, "startViewTransition");
+    Reflect.deleteProperty(root, "animate");
     root.classList.remove("theme-reveal");
-    root.style.removeProperty("--reveal-x");
-    root.style.removeProperty("--reveal-y");
   });
 
   it("switches the mode inside a view transition when the browser has them", async () => {
@@ -203,20 +215,30 @@ describe("ThemeToggle: circular reveal", () => {
     expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe("dark");
   });
 
-  it("lets the reveal start where the mouse clicked", () => {
+  it("grows the new mode as a circle that starts where the mouse clicked", async () => {
     mockColorScheme("light");
     stubViewTransition();
+    const animate = stubAnimate();
     render(<ThemeToggle />);
 
     fireEvent.click(screen.getByRole("button"), { clientX: 120, clientY: 40 });
 
-    expect(root.style.getPropertyValue("--reveal-x")).toBe("120px");
-    expect(root.style.getPropertyValue("--reveal-y")).toBe("40px");
+    await waitFor(() => expect(animate).toHaveBeenCalledTimes(1));
+    const [keyframes, options] = animate.mock.calls[0];
+    expect(keyframes.clipPath).toEqual([
+      "circle(0px at 120px 40px)",
+      `circle(${expectedRadius(120, 40)}px at 120px 40px)`,
+    ]);
+    expect(options).toMatchObject({
+      duration: 700,
+      pseudoElement: "::view-transition-new(root)",
+    });
   });
 
-  it("lets the reveal start at the middle of the button when there is no mouse position", () => {
+  it("starts the circle at the middle of the button when there is no mouse position", async () => {
     mockColorScheme("light");
     stubViewTransition();
+    const animate = stubAnimate();
     render(<ThemeToggle />);
     const button = screen.getByRole("button");
     vi.spyOn(button, "getBoundingClientRect").mockReturnValue({
@@ -228,8 +250,10 @@ describe("ThemeToggle: circular reveal", () => {
 
     fireEvent.click(button, { clientX: 0, clientY: 0 });
 
-    expect(root.style.getPropertyValue("--reveal-x")).toBe("120px");
-    expect(root.style.getPropertyValue("--reveal-y")).toBe("40px");
+    await waitFor(() => expect(animate).toHaveBeenCalledTimes(1));
+    expect(animate.mock.calls[0][0].clipPath[0]).toBe(
+      "circle(0px at 120px 40px)"
+    );
   });
 
   it("marks the page as revealing only while the transition runs", async () => {

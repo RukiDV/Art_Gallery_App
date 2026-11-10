@@ -3,6 +3,10 @@ import { flushSync } from "react-dom";
 
 import { loadTheme, saveTheme, type Theme } from "../theme";
 
+const REVEAL_DURATION_MS = 700;
+
+function noop() {}
+
 function MoonIcon() {
   return (
     <svg
@@ -66,19 +70,19 @@ export default function ThemeToggle() {
       return;
     }
 
-    // The new mode grows as a circle from the click (or the button, when the
-    // click came from the keyboard); see styles.css.
+    // The new mode grows as a circle from the click (or from the button, when
+    // the click came from the keyboard).
     const { clientX, clientY } = event;
     const box = event.currentTarget.getBoundingClientRect();
     const hasMousePosition = clientX !== 0 || clientY !== 0;
-    root.style.setProperty(
-      "--reveal-x",
-      `${hasMousePosition ? clientX : box.left + box.width / 2}px`
+    const x = hasMousePosition ? clientX : box.left + box.width / 2;
+    const y = hasMousePosition ? clientY : box.top + box.height / 2;
+    // The circle must reach the farthest corner of the window.
+    const radius = Math.hypot(
+      Math.max(x, window.innerWidth - x),
+      Math.max(y, window.innerHeight - y)
     );
-    root.style.setProperty(
-      "--reveal-y",
-      `${hasMousePosition ? clientY : box.top + box.height / 2}px`
-    );
+
     root.classList.add("theme-reveal");
 
     const transition = document.startViewTransition(() => {
@@ -86,6 +90,23 @@ export default function ThemeToggle() {
       root.dataset.theme = nextTheme;
       flushSync(() => applyTheme(nextTheme));
     });
+
+    transition.ready.then(() => {
+      root.animate?.(
+        {
+          clipPath: [
+            `circle(0px at ${x}px ${y}px)`,
+            `circle(${radius}px at ${x}px ${y}px)`,
+          ],
+        },
+        {
+          duration: REVEAL_DURATION_MS,
+          easing: "ease-in-out",
+          pseudoElement: "::view-transition-new(root)",
+        }
+      );
+    }, noop);
+
     const cleanUp = () => root.classList.remove("theme-reveal");
     transition.finished.then(cleanUp, cleanUp);
   }
