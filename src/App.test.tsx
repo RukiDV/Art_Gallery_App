@@ -1750,3 +1750,49 @@ describe("App: Show another", () => {
     }
   );
 });
+
+describe("App: slideshow", () => {
+  it("has a Start slideshow button on /", async () => {
+    stubFetchWithArtPieces();
+    renderApp("/");
+    expect(
+      await screen.findByRole("button", { name: "Start slideshow" })
+    ).toBeInTheDocument();
+  });
+
+  it.each(["/art-pieces", "/favorites"])(
+    "has no slideshow button on %s",
+    async (route) => {
+      stubFetchWithArtPieces();
+
+      renderApp(route);
+      await screen.findByRole("link", { name: "Spotlight" });
+      await waitFor(() =>
+        expect(screen.queryByText(/loading/i)).not.toBeInTheDocument()
+      );
+
+      expect(
+        screen.queryByRole("button", { name: /slideshow/ })
+      ).not.toBeInTheDocument();
+    }
+  );
+
+  it("stops the slideshow when the Spotlight page is left", async () => {
+    const user = userEvent.setup();
+    mockRandomFraction(0);
+    stubFetchWithArtPieces();
+    renderApp("/");
+    vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });
+    await user.click(
+      await screen.findByRole("button", { name: "Start slideshow" })
+    );
+    expect(vi.getTimerCount()).toBe(1);
+
+    await user.click(screen.getByRole("link", { name: "Gallery" }));
+
+    expect(vi.getTimerCount()).toBe(0);
+    expect(
+      screen.queryByRole("button", { name: /slideshow/ })
+    ).not.toBeInTheDocument();
+  });
+});

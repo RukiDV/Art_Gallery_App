@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { mockRandomFraction } from "../mockRandom";
@@ -26,7 +26,21 @@ const artPieces: ArtPiece[] = [
   },
 ];
 
+const threePieces: ArtPiece[] = [
+  ...artPieces,
+  {
+    slug: "the-kiss",
+    artist: "Gustav Klimt",
+    name: "The Kiss",
+    imageSource: "https://example.com/the-kiss.jpg",
+    year: "1908",
+    genre: "Symbolism",
+    colors: ["#C9A227"],
+  },
+];
+
 afterEach(() => {
+  vi.useRealTimers();
   vi.restoreAllMocks();
 });
 
@@ -108,19 +122,6 @@ describe("SpotlightPage", () => {
 });
 
 describe("SpotlightPage: Show another", () => {
-  const threePieces: ArtPiece[] = [
-    ...artPieces,
-    {
-      slug: "the-kiss",
-      artist: "Gustav Klimt",
-      name: "The Kiss",
-      imageSource: "https://example.com/the-kiss.jpg",
-      year: "1908",
-      genre: "Symbolism",
-      colors: ["#C9A227"],
-    },
-  ];
-
   it("has a button named Show another when there are several pieces", () => {
     render(spotlight());
 
@@ -229,5 +230,192 @@ describe("SpotlightPage: Show another", () => {
         name: "Favorite Wheat Field with Cypresses",
       })
     ).toHaveAttribute("aria-pressed", "true");
+  });
+});
+
+describe("SpotlightPage: slideshow button", () => {
+  it("has a button named Start slideshow when there are several pieces", () => {
+    render(spotlight());
+
+    expect(
+      screen.getByRole("button", { name: "Start slideshow" })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Stop slideshow" })
+    ).not.toBeInTheDocument();
+  });
+
+  it("is labeled Stop slideshow after Start slideshow is clicked, and back after Stop", async () => {
+    const user = userEvent.setup();
+    render(spotlight());
+
+    await user.click(screen.getByRole("button", { name: "Start slideshow" }));
+
+    expect(
+      screen.getByRole("button", { name: "Stop slideshow" })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Start slideshow" })
+    ).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Stop slideshow" }));
+
+    expect(
+      screen.getByRole("button", { name: "Start slideshow" })
+    ).toBeInTheDocument();
+  });
+
+  it("has no slideshow button with only one piece", () => {
+    render(spotlight(undefined, undefined, [artPieces[0]]));
+
+    expect(
+      screen.queryByRole("button", { name: /slideshow/ })
+    ).not.toBeInTheDocument();
+  });
+
+  it("announces the shown piece politely to screen readers", () => {
+    render(spotlight());
+
+    expect(screen.getByRole("figure")).toHaveAttribute("aria-live", "polite");
+  });
+});
+
+describe("SpotlightPage: slideshow timer", () => {
+  const SLIDE_MS = 5000;
+
+  function setUp() {
+    // Only the interval is faked: Testing Library waits on a real setTimeout.
+    vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });
+    return userEvent.setup();
+  }
+
+  function advance(ms: number) {
+    act(() => {
+      vi.advanceTimersByTime(ms);
+    });
+  }
+
+  function shownName() {
+    return screen.getByRole("img").getAttribute("alt");
+  }
+
+  async function startSlideshow(user: ReturnType<typeof setUp>) {
+    await user.click(screen.getByRole("button", { name: "Start slideshow" }));
+  }
+
+  it("does not change the piece or start a timer by itself", () => {
+    setUp();
+    mockRandomFraction(0);
+    render(spotlight());
+
+    advance(4 * SLIDE_MS);
+
+    expect(shownName()).toBe("The Harvesters");
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it("shows another piece after 5 seconds, not before", async () => {
+    const user = setUp();
+    mockRandomFraction(0);
+    render(spotlight());
+    await startSlideshow(user);
+
+    advance(SLIDE_MS - 1);
+    expect(shownName()).toBe("The Harvesters");
+
+    advance(1);
+    expect(shownName()).toBe("Wheat Field with Cypresses");
+    expect(screen.getByText("Vincent van Gogh")).toBeInTheDocument();
+  });
+
+  it("never shows the same piece twice in a row while it runs", async () => {
+    const user = setUp();
+    const setRandomFraction = mockRandomFraction(0);
+    render(spotlight(undefined, undefined, threePieces));
+    await startSlideshow(user);
+
+    for (const fraction of [0, 0.3, 0.5, 0.7, 0.999, 0, 0.5]) {
+      const shown = shownName();
+      setRandomFraction(fraction);
+
+      advance(SLIDE_MS);
+
+      expect(shownName()).not.toBe(shown);
+    }
+  });
+
+  it("keeps showing a new piece every 5 seconds", async () => {
+    const user = setUp();
+    mockRandomFraction(0);
+    render(spotlight());
+    await startSlideshow(user);
+
+    advance(SLIDE_MS);
+    expect(shownName()).toBe("Wheat Field with Cypresses");
+    advance(SLIDE_MS);
+    expect(shownName()).toBe("The Harvesters");
+    advance(SLIDE_MS);
+    expect(shownName()).toBe("Wheat Field with Cypresses");
+  });
+
+  it("stops on Stop slideshow, keeps the shown piece and leaves no timer", async () => {
+    const user = setUp();
+    mockRandomFraction(0);
+    render(spotlight());
+    await startSlideshow(user);
+    advance(SLIDE_MS);
+    const shown = shownName();
+
+    await user.click(screen.getByRole("button", { name: "Stop slideshow" }));
+    advance(4 * SLIDE_MS);
+
+    expect(shownName()).toBe(shown);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it("restarts the 5 seconds when Show another is clicked during the slideshow", async () => {
+    const user = setUp();
+    mockRandomFraction(0);
+    render(spotlight());
+    await startSlideshow(user);
+
+    advance(3000);
+    await user.click(screen.getByRole("button", { name: "Show another" }));
+    expect(shownName()).toBe("Wheat Field with Cypresses");
+
+    advance(3000);
+    expect(shownName()).toBe("Wheat Field with Cypresses");
+
+    advance(2000);
+    expect(shownName()).toBe("The Harvesters");
+    expect(
+      screen.getByRole("button", { name: "Stop slideshow" })
+    ).toBeInTheDocument();
+  });
+
+  it("neither changes the piece nor restarts the 5 seconds when a favorite changes", async () => {
+    const user = setUp();
+    mockRandomFraction(0);
+    const { rerender } = render(spotlight());
+    await startSlideshow(user);
+
+    advance(3000);
+    rerender(spotlight((slug) => slug === "the-harvesters"));
+    expect(shownName()).toBe("The Harvesters");
+
+    advance(2000);
+    expect(shownName()).toBe("Wheat Field with Cypresses");
+  });
+
+  it("leaves no timer when the page is left during the slideshow", async () => {
+    const user = setUp();
+    mockRandomFraction(0);
+    const { unmount } = render(spotlight());
+    await startSlideshow(user);
+    expect(vi.getTimerCount()).toBeGreaterThan(0);
+
+    unmount();
+
+    expect(vi.getTimerCount()).toBe(0);
   });
 });
