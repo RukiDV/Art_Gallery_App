@@ -332,6 +332,15 @@ label {
   list-style: none;
 }
 
+/* Cards in one row get the same height, even when a title wraps. */
+.art-list li {
+  display: flex;
+}
+
+.art-list .art-piece {
+  flex: 1;
+}
+
 .art-piece {
   position: relative;
   margin: 0;
@@ -466,6 +475,11 @@ label {
 .art-piece:not(.spotlight) .favorite-button {
   top: auto;
   bottom: var(--space-3);
+}
+
+/* Keep the caption text clear of the heart: its width plus both gaps. */
+.art-piece:not(.spotlight) figcaption {
+  padding-right: calc(2.5rem + 2 * var(--space-3));
 }
 
 .favorite-button:hover {
