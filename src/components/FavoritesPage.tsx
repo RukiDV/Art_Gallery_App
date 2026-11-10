@@ -19,10 +19,12 @@ export default function FavoritesPage({
   }
 
   return (
-    <ArtPieceList
-      artPieces={favorites}
-      isFavorite={isFavorite}
-      onToggleFavorite={onToggleFavorite}
-    />
+    <div className="favorites-wall">
+      <ArtPieceList
+        artPieces={favorites}
+        isFavorite={isFavorite}
+        onToggleFavorite={onToggleFavorite}
+      />
+    </div>
   );
 }
