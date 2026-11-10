@@ -495,7 +495,7 @@ label {
 .details {
   position: relative;
   display: grid;
-  gap: var(--space-5) var(--space-6);
+  gap: var(--space-5);
 }
 
 .details > a {
@@ -510,29 +510,44 @@ label {
   content: "←";
 }
 
+/* Picture and info are one card: the mat on one side, the text on the other. */
+.details-card {
+  display: grid;
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+}
+
 .details-media {
   position: relative;
+  display: grid;
+  place-items: center;
+  padding: var(--space-5);
+  background: var(--mat);
 }
 
 .details-media img {
   display: block;
   width: 100%;
-  max-height: 36rem;
-  padding: var(--space-4);
+  max-height: 34rem;
   object-fit: contain;
-  background: var(--mat);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow);
+  filter: drop-shadow(0 8px 20px #0006);
 }
 
-/* The info is a card with room to breathe. */
 .details-info {
-  align-self: start;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: center;
+  align-items: center;
   padding: var(--space-6);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow);
+}
+
+.details-info h2,
+.details-artist,
+.palette {
+  flex-basis: 100%;
 }
 
 .details-info h2 {
@@ -592,13 +607,8 @@ label {
 }
 
 @media (width >= 48rem) {
-  .details {
+  .details-card {
     grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
-  }
-
-  .details > a,
-  .details-comments {
-    grid-column: 1 / -1;
   }
 }
 
