@@ -1,8 +1,9 @@
 import { type ReactNode, useEffect, useState } from "react";
-import { Route, Routes } from "react-router";
+import { Link, Route, Routes } from "react-router";
 import useSWR from "swr";
 
 import ArtPieceDetailsPage from "./components/ArtPieceDetailsPage";
+import EmptyFrame from "./components/EmptyFrame";
 import FavoritesPage from "./components/FavoritesPage";
 import GalleryPage from "./components/GalleryPage";
 import Navigation from "./components/Navigation";
@@ -107,6 +108,7 @@ export default function App() {
     if (error && !isLoadingWithoutData) {
       return (
         <div className="status-message">
+          <EmptyFrame symbol="!" />
           <p>Failed to load the art pieces. Please try again later.</p>
           <button type="button" onClick={() => mutate()}>
             Try again
@@ -116,7 +118,12 @@ export default function App() {
     }
 
     if (!artPieces) {
-      return <p className="status-message">Loading art pieces…</p>;
+      return (
+        <div className="status-message">
+          <EmptyFrame isLoading />
+          <p>Loading art pieces…</p>
+        </div>
+      );
     }
 
     return render(artPieces);
@@ -175,7 +182,20 @@ export default function App() {
           />
           <Route
             path="*"
-            element={<p className="status-message">Page not found</p>}
+            element={
+              <div className="status-message">
+                <EmptyFrame symbol="?" />
+                <p>Page not found</p>
+                <div className="status-actions">
+                  <Link to="/" className="button-link button-primary">
+                    Back to the Spotlight
+                  </Link>
+                  <Link to="/art-pieces" className="button-link">
+                    Browse the gallery
+                  </Link>
+                </div>
+              </div>
+            }
           />
         </Routes>
       </main>

@@ -4,6 +4,7 @@ import type { ArtPiece, ArtPieceComment } from "../types";
 import ColorPalette from "./ColorPalette";
 import CommentForm from "./CommentForm";
 import Comments from "./Comments";
+import EmptyFrame from "./EmptyFrame";
 import FavoriteButton from "./FavoriteButton";
 
 type ArtPieceDetailsPageProps = {
@@ -29,7 +30,17 @@ export default function ArtPieceDetailsPage({
   const artPiece = artPieces.find((piece) => piece.slug === slug);
 
   if (!artPiece) {
-    return <p className="status-message">Art piece not found</p>;
+    return (
+      <div className="status-message">
+        <EmptyFrame symbol="?" />
+        <p>Art piece not found</p>
+        <div className="status-actions">
+          <Link to="/art-pieces" className="button-link button-primary">
+            Back to the gallery
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   return (

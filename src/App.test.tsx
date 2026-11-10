@@ -1886,3 +1886,70 @@ describe("App: header", () => {
     await screen.findByRole("link", { name: "Spotlight" });
   });
 });
+
+describe("App: status pages with an empty frame", () => {
+  function frameOf(container: HTMLElement) {
+    return container.querySelector(".empty-frame");
+  }
+
+  it("shows a decorative empty frame and ways back on an unknown URL", async () => {
+    stubFetchWithArtPieces();
+
+    const { container } = renderApp("/does-not-exist");
+
+    expect(await screen.findByText("Page not found")).toBeInTheDocument();
+    expect(frameOf(container)).toHaveAttribute("aria-hidden", "true");
+    expect(
+      screen.getByRole("link", { name: "Back to the Spotlight" })
+    ).toHaveAttribute("href", "/");
+    expect(
+      screen.getByRole("link", { name: "Browse the gallery" })
+    ).toHaveAttribute("href", "/art-pieces");
+  });
+
+  it("goes to the Spotlight with the link on an unknown URL", async () => {
+    stubFetchWithArtPieces();
+    const user = userEvent.setup();
+    renderApp("/does-not-exist");
+
+    await user.click(
+      await screen.findByRole("link", { name: "Back to the Spotlight" })
+    );
+
+    expect(await screen.findByRole("figure")).toBeInTheDocument();
+    expect(screen.queryByText("Page not found")).not.toBeInTheDocument();
+  });
+
+  it("shows a decorative empty frame and a way back for an unknown art piece", async () => {
+    stubFetchWithArtPieces();
+
+    const { container } = renderApp("/art-pieces/does-not-exist");
+
+    expect(await screen.findByText("Art piece not found")).toBeInTheDocument();
+    expect(frameOf(container)).toHaveAttribute("aria-hidden", "true");
+    expect(
+      screen.getByRole("link", { name: "Back to the gallery" })
+    ).toHaveAttribute("href", "/art-pieces");
+  });
+
+  it("shows a decorative empty frame while loading", () => {
+    stubFetchWithOutcomes("never finishes");
+
+    const { container } = renderApp("/");
+
+    expect(screen.getByText(/loading/i)).toBeInTheDocument();
+    expect(frameOf(container)).toHaveAttribute("aria-hidden", "true");
+  });
+
+  it("shows a decorative empty frame with the error message and Try again", async () => {
+    stubFetchWithOutcomes("fails");
+
+    const { container } = renderApp("/");
+
+    expect(await screen.findByText(/failed/i)).toBeInTheDocument();
+    expect(frameOf(container)).toHaveAttribute("aria-hidden", "true");
+    expect(
+      screen.getByRole("button", { name: "Try again" })
+    ).toBeInTheDocument();
+  });
+});
