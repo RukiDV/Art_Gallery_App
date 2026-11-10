@@ -251,6 +251,99 @@ describe("loadArtPiecesInfo with the edited flag", () => {
   );
 });
 
+describe("loadArtPiecesInfo with the history of a comment", () => {
+  const version = {
+    text: "The first version",
+    replacedAt: "2026-11-10T09:00:00.000Z",
+  };
+  const editedComment = {
+    id: "comment-1",
+    text: "The current version",
+    date: "2026-11-09T10:15:00.000Z",
+    edited: true,
+  };
+
+  it("keeps the earlier versions of a comment in their order", () => {
+    const entry: ArtPieceInfo = {
+      slug: "the-harvesters",
+      isFavorite: false,
+      comments: [
+        {
+          ...editedComment,
+          history: [
+            version,
+            {
+              text: "The second version",
+              replacedAt: "2026-11-10T10:00:00.000Z",
+            },
+          ],
+        },
+      ],
+    };
+    saveArtPiecesInfo([entry]);
+
+    expect(loadArtPiecesInfo()).toEqual([entry]);
+  });
+
+  it("loads an edited comment that has no history (saved before the history existed)", () => {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify([
+        {
+          slug: "the-harvesters",
+          isFavorite: false,
+          comments: [editedComment],
+        },
+      ])
+    );
+
+    const [loaded] = loadArtPiecesInfo();
+
+    expect(loaded.comments[0].edited).toBe(true);
+    expect(loaded.comments[0]).not.toHaveProperty("history");
+  });
+
+  it("keeps an empty history", () => {
+    const entry: ArtPieceInfo = {
+      slug: "the-harvesters",
+      isFavorite: false,
+      comments: [{ ...editedComment, history: [] }],
+    };
+    saveArtPiecesInfo([entry]);
+
+    expect(loadArtPiecesInfo()).toEqual([entry]);
+  });
+
+  it.each([
+    ["a text instead of a list", "versions"],
+    ["an object instead of a list", { text: "x" }],
+    ["a version that is null", [null]],
+    ["a version that is a text", ["x"]],
+    ["a version without text", [{ replacedAt: version.replacedAt }]],
+    ["a version without replacedAt", [{ text: "x" }]],
+    ["a version with a number as text", [{ text: 5, replacedAt: "x" }]],
+    ["a version with a number as replacedAt", [{ text: "x", replacedAt: 5 }]],
+    ["one good and one broken version", [version, { text: "x" }]],
+  ])(
+    "ignores an entry with a comment that has %s as history",
+    (_name, history) => {
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify([
+          {
+            slug: "the-harvesters",
+            isFavorite: true,
+            comments: [{ ...editedComment, history }],
+          },
+          info[1],
+        ])
+      );
+
+      expect(loadArtPiecesInfo()).toEqual([info[1]]);
+    }
+  );
+});
+
 describe("saveArtPiecesInfo", () => {
   it("stores the list as JSON under one key", () => {
     saveArtPiecesInfo(info);

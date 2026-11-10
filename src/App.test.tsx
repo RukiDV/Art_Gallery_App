@@ -747,6 +747,162 @@ describe("App", () => {
     expect(screen.getByText("edited")).toBeInTheDocument();
   });
 
+  it("keeps the old text and the time of the edit as an earlier version", async () => {
+    const user = userEvent.setup();
+    vi.useFakeTimers({ toFake: ["Date"] });
+    stubFetchWithArtPieces();
+
+    renderApp("/art-pieces/the-harvesters");
+    await screen.findByRole("heading", { name: "Comments" });
+    vi.setSystemTime(new Date("2026-11-09T10:15:00.000Z"));
+    await addComment(user, "First text");
+    vi.setSystemTime(new Date("2026-11-09T18:45:00.000Z"));
+    await startEditingComment(user, "First text", "Second text");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    await user.click(screen.getByRole("button", { name: "edited" }));
+
+    const list = screen.getByRole("list", { name: "Earlier versions" });
+    expect(within(list).getByText("First text")).toBeInTheDocument();
+    expect(
+      within(list).getByText(
+        new Date("2026-11-09T18:45:00.000Z").toLocaleString()
+      )
+    ).toBeInTheDocument();
+    expect(within(list).queryByText("Second text")).not.toBeInTheDocument();
+    expect(screen.getByText("Second text")).toBeInTheDocument();
+  });
+
+  it("adds one earlier version per saved edit, oldest first", async () => {
+    const user = userEvent.setup();
+    vi.useFakeTimers({ toFake: ["Date"] });
+    stubFetchWithArtPieces();
+
+    renderApp("/art-pieces/the-harvesters");
+    await screen.findByRole("heading", { name: "Comments" });
+    vi.setSystemTime(new Date("2026-11-09T10:15:00.000Z"));
+    await addComment(user, "v1");
+    vi.setSystemTime(new Date("2026-11-09T12:00:00.000Z"));
+    await startEditingComment(user, "v1", "v2");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    vi.setSystemTime(new Date("2026-11-09T13:00:00.000Z"));
+    await startEditingComment(user, "v2", "v3");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    await user.click(screen.getByRole("button", { name: "edited" }));
+
+    const items = within(
+      screen.getByRole("list", { name: "Earlier versions" })
+    ).getAllByRole("listitem");
+    expect(items).toHaveLength(2);
+    expect(items[0]).toHaveTextContent("v1");
+    expect(items[0]).toHaveTextContent(
+      new Date("2026-11-09T12:00:00.000Z").toLocaleString()
+    );
+    expect(items[1]).toHaveTextContent("v2");
+    expect(items[1]).toHaveTextContent(
+      new Date("2026-11-09T13:00:00.000Z").toLocaleString()
+    );
+  });
+
+  it("adds no earlier version for Cancel, an empty text or a Save without changes", async () => {
+    const user = userEvent.setup();
+    stubFetchWithArtPieces();
+
+    renderApp("/art-pieces/the-harvesters");
+    await screen.findByRole("heading", { name: "Comments" });
+    await addComment(user, "Original");
+    await startEditingComment(user, "Original", "Changed");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    await startEditingComment(user, "Changed", "Not saved");
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
+    await startEditingComment(user, "Changed", "");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
+    await startEditingComment(user, "Changed", "Changed");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    await user.click(screen.getByRole("button", { name: "edited" }));
+
+    const items = within(
+      screen.getByRole("list", { name: "Earlier versions" })
+    ).getAllByRole("listitem");
+    expect(items).toHaveLength(1);
+    expect(items[0]).toHaveTextContent("Original");
+  });
+
+  it("keeps the earlier versions after the app is reloaded", async () => {
+    const user = userEvent.setup();
+    stubFetchWithArtPieces();
+
+    const firstVisit = renderApp("/art-pieces/the-harvesters");
+    await screen.findByRole("heading", { name: "Comments" });
+    await addComment(user, "Before the edit");
+    await startEditingComment(user, "Before the edit", "After the edit");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    firstVisit.unmount();
+
+    renderApp("/art-pieces/the-harvesters");
+    await user.click(await screen.findByRole("button", { name: "edited" }));
+
+    expect(
+      within(screen.getByRole("list", { name: "Earlier versions" })).getByText(
+        "Before the edit"
+      )
+    ).toBeInTheDocument();
+  });
+
+  it("opens the history of a comment that was edited before the history existed", async () => {
+    const user = userEvent.setup();
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify([
+        {
+          slug: "the-harvesters",
+          isFavorite: false,
+          comments: [
+            {
+              id: "old",
+              text: "Edited long ago",
+              date: "2026-11-09T10:15:00.000Z",
+              edited: true,
+            },
+          ],
+        },
+      ])
+    );
+    stubFetchWithArtPieces();
+
+    renderApp("/art-pieces/the-harvesters");
+    await user.click(await screen.findByRole("button", { name: "edited" }));
+
+    expect(screen.getByText("No earlier versions saved")).toBeInTheDocument();
+  });
+
+  it("deletes the earlier versions with their comment and leaves other comments alone", async () => {
+    const user = userEvent.setup();
+    stubFetchWithArtPieces();
+
+    renderApp("/art-pieces/the-harvesters");
+    await screen.findByRole("heading", { name: "Comments" });
+    await addComment(user, "First comment");
+    await addComment(user, "Second comment");
+    await startEditingComment(user, "First comment", "First, changed");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    await startEditingComment(user, "Second comment", "Second, changed");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    await user.click(
+      screen.getByRole("button", { name: "Delete comment: First, changed" })
+    );
+    await user.click(screen.getByRole("button", { name: "edited" }));
+
+    expect(screen.queryByText("First comment")).not.toBeInTheDocument();
+    expect(
+      within(screen.getByRole("list", { name: "Earlier versions" })).getByText(
+        "Second comment"
+      )
+    ).toBeInTheDocument();
+  });
+
   it("keeps comments with the art piece they were written for", async () => {
     const user = userEvent.setup();
     stubFetchWithArtPieces();

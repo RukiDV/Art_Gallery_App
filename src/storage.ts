@@ -1,4 +1,4 @@
-import type { ArtPieceInfo } from "./types";
+import type { ArtPieceCommentVersion, ArtPieceInfo } from "./types";
 
 export const STORAGE_KEY = "art-pieces-info";
 
@@ -8,6 +8,7 @@ type StoredComment = {
   text: string;
   date: string;
   edited?: boolean;
+  history?: ArtPieceCommentVersion[];
 };
 type StoredArtPieceInfo = Omit<ArtPieceInfo, "comments"> & {
   comments: StoredComment[];
@@ -17,13 +18,23 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
 
+function isCommentVersion(value: unknown): value is ArtPieceCommentVersion {
+  return (
+    isRecord(value) &&
+    typeof value.text === "string" &&
+    typeof value.replacedAt === "string"
+  );
+}
+
 function isStoredComment(value: unknown): value is StoredComment {
   return (
     isRecord(value) &&
     (value.id === undefined || typeof value.id === "string") &&
     typeof value.text === "string" &&
     typeof value.date === "string" &&
-    (value.edited === undefined || typeof value.edited === "boolean")
+    (value.edited === undefined || typeof value.edited === "boolean") &&
+    (value.history === undefined ||
+      (Array.isArray(value.history) && value.history.every(isCommentVersion)))
   );
 }
 

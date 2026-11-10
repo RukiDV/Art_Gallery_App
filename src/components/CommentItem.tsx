@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 
 import type { ArtPieceComment } from "../types";
 import CommentEditForm from "./CommentEditForm";
+import CommentHistory from "./CommentHistory";
 
 type CommentItemProps = {
   comment: ArtPieceComment;
@@ -15,6 +16,8 @@ export default function CommentItem({
   onEdit,
 }: CommentItemProps) {
   const [isEditing, setIsEditing] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const historyId = useId();
   const editButtonRef = useRef<HTMLButtonElement>(null);
   const wasEditing = useRef(false);
 
@@ -53,10 +56,23 @@ export default function CommentItem({
             <span className="comment-separator" aria-hidden="true">
               ·
             </span>
-            <span className="comment-edited">edited</span>
+            <button
+              type="button"
+              className="comment-edited"
+              aria-expanded={isHistoryOpen}
+              aria-controls={isHistoryOpen ? historyId : undefined}
+              onClick={() => setIsHistoryOpen((isOpen) => !isOpen)}
+            >
+              edited
+            </button>
           </>
         )}
       </p>
+      {isHistoryOpen && (
+        <div id={historyId}>
+          <CommentHistory history={comment.history ?? []} />
+        </div>
+      )}
       {!isEditing && (
         <>
           <button

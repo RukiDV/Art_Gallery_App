@@ -130,6 +130,20 @@ nav a.active {
   color: #666;
 }
 
+.comment-edited {
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  background: none;
+  border: none;
+  text-decoration: underline dotted;
+}
+
+.comment-edited:hover {
+  color: #222;
+}
+
 .comment-separator {
   margin: 0 0.4rem;
 }

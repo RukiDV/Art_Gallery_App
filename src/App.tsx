@@ -73,10 +73,22 @@ export default function App() {
   }
 
   function editComment(slug: string, commentId: string, text: string) {
+    const replacedAt = new Date().toISOString();
+
     updateInfo(slug, (info) => ({
       ...info,
       comments: info.comments.map((comment) =>
-        comment.id === commentId ? { ...comment, text, edited: true } : comment
+        comment.id === commentId
+          ? {
+              ...comment,
+              text,
+              edited: true,
+              history: [
+                ...(comment.history ?? []),
+                { text: comment.text, replacedAt },
+              ],
+            }
+          : comment
       ),
     }));
   }

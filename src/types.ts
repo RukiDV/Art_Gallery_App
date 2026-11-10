@@ -8,11 +8,17 @@ export type ArtPiece = {
   colors: string[];
 };
 
+export type ArtPieceCommentVersion = {
+  text: string;
+  replacedAt: string;
+};
+
 export type ArtPieceComment = {
   id: string;
   text: string;
   date: string;
   edited?: boolean;
+  history?: ArtPieceCommentVersion[];
 };
 
 export type ArtPieceInfo = {
