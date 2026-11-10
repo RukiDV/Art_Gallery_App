@@ -9,6 +9,7 @@ export type ArtPiece = {
 };
 
 export type ArtPieceComment = {
+  id: string;
   text: string;
   date: string;
 };

@@ -53,11 +53,22 @@ export default function App() {
   }
 
   function addComment(slug: string, text: string) {
-    const comment: ArtPieceComment = { text, date: new Date().toISOString() };
+    const comment: ArtPieceComment = {
+      id: crypto.randomUUID(),
+      text,
+      date: new Date().toISOString(),
+    };
 
     updateInfo(slug, (info) => ({
       ...info,
       comments: [...info.comments, comment],
+    }));
+  }
+
+  function deleteComment(slug: string, commentId: string) {
+    updateInfo(slug, (info) => ({
+      ...info,
+      comments: info.comments.filter((comment) => comment.id !== commentId),
     }));
   }
 
@@ -107,6 +118,7 @@ export default function App() {
                 onToggleFavorite={toggleFavorite}
                 getComments={getComments}
                 onAddComment={addComment}
+                onDeleteComment={deleteComment}
               />
             ))}
           />

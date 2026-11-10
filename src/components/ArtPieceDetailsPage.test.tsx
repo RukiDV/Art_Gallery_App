@@ -31,7 +31,8 @@ function renderDetails(
   isFavorite: (slug: string) => boolean = () => false,
   onToggleFavorite: (slug: string) => void = () => {},
   getComments: (slug: string) => ArtPieceComment[] = () => [],
-  onAddComment: (slug: string, text: string) => void = () => {}
+  onAddComment: (slug: string, text: string) => void = () => {},
+  onDeleteComment: (slug: string, id: string) => void = () => {}
 ) {
   render(
     <MemoryRouter initialEntries={[`/art-pieces/${slug}`]}>
@@ -45,6 +46,7 @@ function renderDetails(
               onToggleFavorite={onToggleFavorite}
               getComments={getComments}
               onAddComment={onAddComment}
+              onDeleteComment={onDeleteComment}
             />
           }
         />
@@ -63,11 +65,18 @@ describe("ArtPieceDetailsPage", () => {
         commentSlug === "wheat-field-with-cypresses"
           ? [
               {
+                id: "c1",
                 text: "What a beautiful sky!",
                 date: "2026-11-09T10:15:00.000Z",
               },
             ]
-          : [{ text: "Not for this piece", date: "2026-11-09T11:00:00.000Z" }]
+          : [
+              {
+                id: "c2",
+                text: "Not for this piece",
+                date: "2026-11-09T11:00:00.000Z",
+              },
+            ]
     );
 
     expect(
@@ -75,6 +84,37 @@ describe("ArtPieceDetailsPage", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("What a beautiful sky!")).toBeInTheDocument();
     expect(screen.queryByText("Not for this piece")).not.toBeInTheDocument();
+  });
+
+  it("reports the slug and the id when a comment is deleted", async () => {
+    const user = userEvent.setup();
+    const onDeleteComment = vi.fn();
+    renderDetails(
+      "wheat-field-with-cypresses",
+      () => false,
+      () => {},
+      () => [
+        {
+          id: "c1",
+          text: "What a beautiful sky!",
+          date: "2026-11-09T10:15:00.000Z",
+        },
+      ],
+      () => {},
+      onDeleteComment
+    );
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Delete comment: What a beautiful sky!",
+      })
+    );
+
+    expect(onDeleteComment).toHaveBeenCalledTimes(1);
+    expect(onDeleteComment).toHaveBeenCalledWith(
+      "wheat-field-with-cypresses",
+      "c1"
+    );
   });
 
   it("shows a comment form that reports the slug and the text", async () => {

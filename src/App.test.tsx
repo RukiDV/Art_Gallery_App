@@ -454,6 +454,157 @@ describe("App", () => {
     expect(comments[1]).toHaveTextContent("second comment");
   });
 
+  it("deletes only the clicked comment when two comments have the same text", async () => {
+    const user = userEvent.setup();
+    vi.useFakeTimers({ toFake: ["Date"] });
+    stubFetchWithArtPieces();
+
+    renderApp("/art-pieces/the-harvesters");
+    await screen.findByRole("heading", { name: "Comments" });
+    vi.setSystemTime(new Date("2026-11-09T10:15:00.000Z"));
+    await addComment(user, "Nice!");
+    vi.setSystemTime(new Date("2026-11-09T10:16:00.000Z"));
+    await addComment(user, "Nice!");
+
+    await user.click(screen.getAllByRole("button", { name: /^Delete/ })[1]);
+
+    expect(screen.getAllByText("Nice!")).toHaveLength(1);
+    expect(
+      screen.getByText(new Date("2026-11-09T10:15:00.000Z").toLocaleString())
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(new Date("2026-11-09T10:16:00.000Z").toLocaleString())
+    ).not.toBeInTheDocument();
+  });
+
+  it("does not change the comments of other art pieces when a comment is deleted", async () => {
+    const user = userEvent.setup();
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify([
+        {
+          slug: "the-harvesters",
+          isFavorite: false,
+          comments: [
+            {
+              id: "a",
+              text: "Harvesters comment",
+              date: "2026-11-09T10:15:00.000Z",
+            },
+          ],
+        },
+        {
+          slug: "wheat-field-with-cypresses",
+          isFavorite: false,
+          comments: [
+            {
+              id: "b",
+              text: "Wheat field comment",
+              date: "2026-11-09T10:16:00.000Z",
+            },
+          ],
+        },
+      ])
+    );
+    stubFetchWithArtPieces();
+
+    renderApp("/art-pieces/the-harvesters");
+    await user.click(
+      await screen.findByRole("button", {
+        name: "Delete comment: Harvesters comment",
+      })
+    );
+    await user.click(screen.getByRole("link", { name: "Back" }));
+    await user.click(
+      await screen.findByRole("link", { name: /Wheat Field with Cypresses/ })
+    );
+
+    expect(await screen.findByText("Wheat field comment")).toBeInTheDocument();
+  });
+
+  it("keeps the Comments section and the form working after the last comment is deleted", async () => {
+    const user = userEvent.setup();
+    stubFetchWithArtPieces();
+
+    renderApp("/art-pieces/the-harvesters");
+    await screen.findByRole("heading", { name: "Comments" });
+    await addComment(user, "The only comment");
+    await user.click(
+      screen.getByRole("button", { name: "Delete comment: The only comment" })
+    );
+
+    expect(screen.queryByText("The only comment")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Comments" })
+    ).toBeInTheDocument();
+
+    await addComment(user, "A new comment");
+
+    expect(screen.getByText("A new comment")).toBeInTheDocument();
+  });
+
+  it("keeps a comment deleted after the app is reloaded", async () => {
+    const user = userEvent.setup();
+    stubFetchWithArtPieces();
+
+    const firstVisit = renderApp("/art-pieces/the-harvesters");
+    await screen.findByRole("heading", { name: "Comments" });
+    await addComment(user, "Gone after a reload");
+    await addComment(user, "Still here after a reload");
+    await user.click(
+      screen.getByRole("button", {
+        name: "Delete comment: Gone after a reload",
+      })
+    );
+    firstVisit.unmount();
+
+    renderApp("/art-pieces/the-harvesters");
+
+    expect(
+      await screen.findByText("Still here after a reload")
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Gone after a reload")).not.toBeInTheDocument();
+  });
+
+  it("shows and can delete a comment that was saved without an id", async () => {
+    const user = userEvent.setup();
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify([
+        {
+          slug: "the-harvesters",
+          isFavorite: true,
+          comments: [
+            {
+              text: "Saved before ids existed",
+              date: "2026-11-09T10:15:00.000Z",
+            },
+          ],
+        },
+      ])
+    );
+    stubFetchWithArtPieces();
+
+    renderApp("/art-pieces/the-harvesters");
+
+    expect(
+      await screen.findByText("Saved before ids existed")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Favorite The Harvesters" })
+    ).toHaveAttribute("aria-pressed", "true");
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Delete comment: Saved before ids existed",
+      })
+    );
+
+    expect(
+      screen.queryByText("Saved before ids existed")
+    ).not.toBeInTheDocument();
+  });
+
   it("keeps comments with the art piece they were written for", async () => {
     const user = userEvent.setup();
     stubFetchWithArtPieces();
