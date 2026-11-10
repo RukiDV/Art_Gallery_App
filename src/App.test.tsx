@@ -1954,3 +1954,76 @@ describe("App: status pages with an empty frame", () => {
     ).toBeInTheDocument();
   });
 });
+
+describe("App: order of the favorites", () => {
+  function favoriteNames() {
+    return screen
+      .getAllByRole("heading", { level: 2 })
+      .map((heading) => heading.textContent);
+  }
+
+  async function addFavorite(
+    user: ReturnType<typeof userEvent.setup>,
+    name: string
+  ) {
+    await user.click(
+      await screen.findByRole("button", { name: `Favorite ${name}` })
+    );
+  }
+
+  async function openFavorites(user: ReturnType<typeof userEvent.setup>) {
+    await user.click(screen.getByRole("link", { name: /^Favorites/ }));
+    await screen.findAllByRole("heading", { level: 2 });
+  }
+
+  it("lists a new favorite at the end, even when it comes first in the gallery", async () => {
+    stubFetchWithArtPieces();
+    const user = userEvent.setup();
+    renderApp("/art-pieces");
+
+    await addFavorite(user, "Wheat Field with Cypresses");
+    await addFavorite(user, "The Harvesters");
+    await openFavorites(user);
+
+    expect(favoriteNames()).toEqual([
+      "Wheat Field with Cypresses",
+      "The Harvesters",
+    ]);
+  });
+
+  it("moves a piece to the end when it is removed and added again", async () => {
+    stubFetchWithArtPieces();
+    const user = userEvent.setup();
+    renderApp("/art-pieces");
+
+    await addFavorite(user, "Wheat Field with Cypresses");
+    await addFavorite(user, "The Harvesters");
+    await addFavorite(user, "Wheat Field with Cypresses");
+    await addFavorite(user, "Wheat Field with Cypresses");
+    await openFavorites(user);
+
+    expect(favoriteNames()).toEqual([
+      "The Harvesters",
+      "Wheat Field with Cypresses",
+    ]);
+  });
+
+  it("keeps the order after a reload", async () => {
+    stubFetchWithArtPieces();
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify([
+        { slug: "wheat-field-with-cypresses", isFavorite: true, comments: [] },
+        { slug: "the-harvesters", isFavorite: true, comments: [] },
+      ])
+    );
+
+    renderApp("/favorites");
+
+    await screen.findAllByRole("heading", { level: 2 });
+    expect(favoriteNames()).toEqual([
+      "Wheat Field with Cypresses",
+      "The Harvesters",
+    ]);
+  });
+});

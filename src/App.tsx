@@ -56,7 +56,20 @@ export default function App() {
   }
 
   function toggleFavorite(slug: string) {
-    updateInfo(slug, (info) => ({ ...info, isFavorite: !info.isFavorite }));
+    setArtPiecesInfo((current) => {
+      const info = current.find((entry) => entry.slug === slug) ?? {
+        slug,
+        isFavorite: false,
+        comments: [],
+      };
+      const toggled = { ...info, isFavorite: !info.isFavorite };
+
+      // A new favorite goes to the end, so the favorites keep the order in
+      // which they were added.
+      return toggled.isFavorite
+        ? [...current.filter((entry) => entry.slug !== slug), toggled]
+        : current.map((entry) => (entry.slug === slug ? toggled : entry));
+    });
   }
 
   function addComment(slug: string, text: string) {
@@ -177,6 +190,7 @@ export default function App() {
                 artPieces={loaded}
                 isFavorite={isFavorite}
                 onToggleFavorite={toggleFavorite}
+                favoriteOrder={artPiecesInfo.map((info) => info.slug)}
               />
             ))}
           />

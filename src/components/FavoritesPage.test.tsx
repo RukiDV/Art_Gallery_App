@@ -94,3 +94,41 @@ describe("FavoritesPage", () => {
     expect(screen.queryByRole("list")).not.toBeInTheDocument();
   });
 });
+
+describe("FavoritesPage: order", () => {
+  function renderOrdered(favoriteOrder?: string[]) {
+    render(
+      <MemoryRouter>
+        <FavoritesPage
+          artPieces={artPieces}
+          isFavorite={() => true}
+          onToggleFavorite={() => {}}
+          favoriteOrder={favoriteOrder}
+        />
+      </MemoryRouter>
+    );
+    return screen
+      .getAllByRole("heading", { level: 2 })
+      .map((heading) => heading.textContent);
+  }
+
+  it("keeps the order of the gallery when no order is given", () => {
+    expect(renderOrdered()).toEqual([
+      "The Harvesters",
+      "Wheat Field with Cypresses",
+    ]);
+  });
+
+  it("lists the favorites in the order in which they were added", () => {
+    expect(
+      renderOrdered(["wheat-field-with-cypresses", "the-harvesters"])
+    ).toEqual(["Wheat Field with Cypresses", "The Harvesters"]);
+  });
+
+  it("puts a favorite that is not in the order at the end", () => {
+    expect(renderOrdered(["wheat-field-with-cypresses"])).toEqual([
+      "Wheat Field with Cypresses",
+      "The Harvesters",
+    ]);
+  });
+});
