@@ -375,7 +375,7 @@ describe("App", () => {
     await user.click(
       await screen.findByRole("button", { name: "Favorite The Harvesters" })
     );
-    await user.click(screen.getByRole("link", { name: "Favorites" }));
+    await user.click(screen.getByRole("link", { name: /^Favorites/ }));
 
     expect(await screen.findAllByRole("listitem")).toHaveLength(1);
     expect(
@@ -399,7 +399,7 @@ describe("App", () => {
     await user.click(
       await screen.findByRole("button", { name: "Favorite The Harvesters" })
     );
-    await user.click(screen.getByRole("link", { name: "Favorites" }));
+    await user.click(screen.getByRole("link", { name: /^Favorites/ }));
     await user.click(
       await screen.findByRole("button", { name: "Favorite The Harvesters" })
     );
@@ -900,6 +900,145 @@ describe("App", () => {
       within(screen.getByRole("list", { name: "Earlier versions" })).getByText(
         "Second comment"
       )
+    ).toBeInTheDocument();
+  });
+
+  it("shows the number of favorites in the navigation and updates it right away", async () => {
+    const user = userEvent.setup();
+    stubFetchWithArtPieces();
+
+    renderApp("/art-pieces");
+    const harvesters = await screen.findByRole("button", {
+      name: "Favorite The Harvesters",
+    });
+    const wheatField = screen.getByRole("button", {
+      name: "Favorite Wheat Field with Cypresses",
+    });
+    expect(screen.getByRole("link", { name: "Favorites" })).toBeInTheDocument();
+
+    await user.click(harvesters);
+    expect(
+      screen.getByRole("link", { name: "Favorites (1)" })
+    ).toBeInTheDocument();
+
+    await user.click(wheatField);
+    expect(
+      screen.getByRole("link", { name: "Favorites (2)" })
+    ).toBeInTheDocument();
+
+    await user.click(harvesters);
+    expect(
+      screen.getByRole("link", { name: "Favorites (1)" })
+    ).toBeInTheDocument();
+
+    await user.click(wheatField);
+    expect(screen.getByRole("link", { name: "Favorites" })).toBeInTheDocument();
+    expect(screen.queryByText(/\(\d+\)/)).not.toBeInTheDocument();
+  });
+
+  it("updates the number when a favorite is added or removed on the details and the spotlight page", async () => {
+    const user = userEvent.setup();
+    mockRandomFraction(0.99);
+    stubFetchWithArtPieces();
+
+    renderApp("/art-pieces/the-harvesters");
+    await user.click(
+      await screen.findByRole("button", { name: "Favorite The Harvesters" })
+    );
+    expect(
+      screen.getByRole("link", { name: "Favorites (1)" })
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("link", { name: "Spotlight" }));
+    await user.click(
+      await screen.findByRole("button", {
+        name: "Favorite Wheat Field with Cypresses",
+      })
+    );
+    expect(
+      screen.getByRole("link", { name: "Favorites (2)" })
+    ).toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Favorite Wheat Field with Cypresses",
+      })
+    );
+    expect(
+      screen.getByRole("link", { name: "Favorites (1)" })
+    ).toBeInTheDocument();
+  });
+
+  it("keeps the number of favorites after the app is reloaded", async () => {
+    const user = userEvent.setup();
+    stubFetchWithArtPieces();
+
+    const firstVisit = renderApp("/art-pieces");
+    await user.click(
+      await screen.findByRole("button", { name: "Favorite The Harvesters" })
+    );
+    firstVisit.unmount();
+
+    renderApp("/art-pieces");
+
+    expect(
+      await screen.findByRole("link", { name: "Favorites (1)" })
+    ).toBeInTheDocument();
+  });
+
+  it("shows the number of favorites while the art pieces are still loading", () => {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify([
+        { slug: "the-harvesters", isFavorite: true, comments: [] },
+        { slug: "wheat-field-with-cypresses", isFavorite: true, comments: [] },
+      ])
+    );
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => new Promise(() => {}))
+    );
+
+    renderApp("/art-pieces");
+
+    expect(screen.getByText(/loading/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Favorites (2)" })
+    ).toBeInTheDocument();
+  });
+
+  it("does not count pieces that are not favorites", async () => {
+    const user = userEvent.setup();
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify([
+        {
+          slug: "the-harvesters",
+          isFavorite: false,
+          comments: [
+            {
+              id: "c1",
+              text: "Only a comment",
+              date: "2026-11-09T10:15:00.000Z",
+            },
+          ],
+        },
+        { slug: "wheat-field-with-cypresses", isFavorite: true, comments: [] },
+      ])
+    );
+    stubFetchWithArtPieces();
+
+    renderApp("/art-pieces/the-harvesters");
+    await screen.findByRole("heading", { name: "Comments" });
+
+    expect(
+      screen.getByRole("link", { name: "Favorites (1)" })
+    ).toBeInTheDocument();
+
+    await addComment(user, "Another comment");
+
+    expect(
+      screen.getByRole("link", { name: "Favorites (1)" })
     ).toBeInTheDocument();
   });
 

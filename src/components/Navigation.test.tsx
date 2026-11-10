@@ -3,10 +3,10 @@ import { MemoryRouter } from "react-router";
 
 import Navigation from "./Navigation";
 
-function renderNavigation(route: string) {
+function renderNavigation(route: string, favoritesCount = 0) {
   render(
     <MemoryRouter initialEntries={[route]}>
-      <Navigation />
+      <Navigation favoritesCount={favoritesCount} />
     </MemoryRouter>
   );
 }
@@ -76,5 +76,49 @@ describe("Navigation", () => {
 
     expect(current.map((link) => link.textContent)).toEqual(["Favorites"]);
     expect(current[0]).toHaveClass("active");
+  });
+});
+
+describe("Navigation favorites counter", () => {
+  it("shows the number of favorites in the text of the Favorites link", () => {
+    renderNavigation("/", 3);
+
+    const link = screen.getByRole("link", { name: "Favorites (3)" });
+
+    expect(link).toHaveAttribute("href", "/favorites");
+    expect(link).toHaveTextContent("Favorites (3)");
+  });
+
+  it("shows a number with more than one digit", () => {
+    renderNavigation("/", 12);
+
+    expect(
+      screen.getByRole("link", { name: "Favorites (12)" })
+    ).toBeInTheDocument();
+  });
+
+  it("is labeled only Favorites when there are no favorites", () => {
+    renderNavigation("/", 0);
+
+    const link = screen.getByRole("link", { name: "Favorites" });
+
+    expect(link).toHaveTextContent(/^Favorites$/);
+    expect(screen.queryByText(/\(0\)/)).not.toBeInTheDocument();
+  });
+
+  it("does not change the other links", () => {
+    renderNavigation("/", 5);
+
+    expect(screen.getByRole("link", { name: "Spotlight" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Gallery" })).toBeInTheDocument();
+  });
+
+  it("still highlights the Favorites link on /favorites when it shows a number", () => {
+    renderNavigation("/favorites", 2);
+
+    const link = screen.getByRole("link", { name: "Favorites (2)" });
+
+    expect(link).toHaveAttribute("aria-current", "page");
+    expect(link).toHaveClass("active");
   });
 });
