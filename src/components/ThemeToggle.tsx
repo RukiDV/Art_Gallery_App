@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { type MouseEvent, useEffect, useState } from "react";
+import { flushSync } from "react-dom";
 
 import { loadTheme, saveTheme, type Theme } from "../theme";
 
@@ -46,10 +47,47 @@ export default function ThemeToggle() {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
 
-  function toggleTheme() {
-    const nextTheme = theme === "dark" ? "light" : "dark";
+  function applyTheme(nextTheme: Theme) {
     setTheme(nextTheme);
     saveTheme(nextTheme);
+  }
+
+  function toggleTheme(event: MouseEvent<HTMLButtonElement>) {
+    const nextTheme = theme === "dark" ? "light" : "dark";
+    const root = document.documentElement;
+    const prefersLessMotion = window.matchMedia?.(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
+
+    // Without view transitions, or for people who prefer less motion, the
+    // mode simply switches.
+    if (!document.startViewTransition || prefersLessMotion) {
+      applyTheme(nextTheme);
+      return;
+    }
+
+    // The new mode grows as a circle from the click (or the button, when the
+    // click came from the keyboard); see styles.css.
+    const { clientX, clientY } = event;
+    const box = event.currentTarget.getBoundingClientRect();
+    const hasMousePosition = clientX !== 0 || clientY !== 0;
+    root.style.setProperty(
+      "--reveal-x",
+      `${hasMousePosition ? clientX : box.left + box.width / 2}px`
+    );
+    root.style.setProperty(
+      "--reveal-y",
+      `${hasMousePosition ? clientY : box.top + box.height / 2}px`
+    );
+    root.classList.add("theme-reveal");
+
+    const transition = document.startViewTransition(() => {
+      // The page must show the new mode before the browser takes the snapshot.
+      root.dataset.theme = nextTheme;
+      flushSync(() => applyTheme(nextTheme));
+    });
+    const cleanUp = () => root.classList.remove("theme-reveal");
+    transition.finished.then(cleanUp, cleanUp);
   }
 
   // The icon shows what a click switches to; the label says it in words.
