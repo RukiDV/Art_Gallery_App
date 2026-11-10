@@ -835,6 +835,139 @@ div.status-message p {
   margin: 0 0 var(--space-4);
 }
 
+/* Status pages: an empty frame under a spotlight cone */
+.status-message:has(> .empty-frame) {
+  position: relative;
+  isolation: isolate;
+  padding-top: var(--space-6);
+  color: var(--text);
+  background: none;
+  border: none;
+}
+
+.status-message:has(> .empty-frame)::before {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  z-index: -1;
+  width: min(100%, 26rem);
+  height: 100%;
+  pointer-events: none;
+  content: "";
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    color-mix(in srgb, var(--accent) 30%, transparent) 18%,
+    transparent 90%
+  );
+  clip-path: polygon(42% 0, 58% 0, 100% 100%, 0 100%);
+  transform: translateX(-50%);
+  animation: fade-in 1.2s var(--ease);
+}
+
+.status-message:has(> .empty-frame) > p {
+  margin: 0 0 var(--space-4);
+  font-family: var(--font-heading);
+  font-size: 1.6rem;
+  color: var(--text);
+}
+
+.empty-frame {
+  width: 9rem;
+  aspect-ratio: 4 / 5;
+  padding: var(--space-3);
+  margin: 0 auto var(--space-5);
+  background: #f4efe6;
+  border: 0.45rem solid #1b1815;
+  border-radius: 2px;
+  box-shadow:
+    0 0 0 1px #ffffff26,
+    0 24px 40px -12px #000000b3;
+  transform-origin: top center;
+  animation: sway 1.8s var(--ease);
+}
+
+.empty-frame span {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  font-family: var(--font-heading);
+  font-size: 3.5rem;
+  color: #8a857c;
+  background: #e4ded2;
+  box-shadow: inset 0 2px 8px #0003;
+}
+
+/* Loading: the empty canvas shimmers */
+.empty-frame-loading {
+  animation: none;
+}
+
+.empty-frame-loading span {
+  background: linear-gradient(100deg, #e4ded2 30%, #f4efe6 50%, #e4ded2 70%) 0
+    0 / 250% 100%;
+  animation: shimmer 1.6s linear infinite;
+}
+
+.status-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  justify-content: center;
+}
+
+/* Links that look like buttons (zero specificity, like the base button) */
+:where(.button-link) {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-2) var(--space-4);
+  color: var(--text);
+  text-decoration: none;
+  background: var(--surface);
+  border: 1px solid var(--control-border);
+  border-radius: 999px;
+  transition:
+    background var(--duration) var(--ease),
+    border-color var(--duration) var(--ease);
+}
+
+:where(.button-link):hover {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+@keyframes sway {
+  0% {
+    transform: rotate(0);
+  }
+
+  25% {
+    transform: rotate(-2.5deg);
+  }
+
+  55% {
+    transform: rotate(1.5deg);
+  }
+
+  80% {
+    transform: rotate(-0.5deg);
+  }
+
+  100% {
+    transform: rotate(0);
+  }
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 100% 0;
+  }
+
+  to {
+    background-position: -100% 0;
+  }
+}
+
 /* Theme button in the navigation */
 .theme-toggle {
   display: grid;
