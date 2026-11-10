@@ -1,3 +1,4 @@
+import { ViewTransition } from "react";
 import { Link } from "react-router";
 
 import type { ArtPiece } from "../types";
@@ -19,7 +20,13 @@ export default function ArtPiecePreview({
       <Link to={`/art-pieces/${artPiece.slug}`}>
         <div className="card-inner">
           <div className="card-front">
-            <img src={artPiece.imageSource} alt={artPiece.name} />
+            {/* The same name on the details page makes the picture travel there. */}
+            <ViewTransition
+              name={`art-picture-${artPiece.slug}`}
+              default="none"
+            >
+              <img src={artPiece.imageSource} alt={artPiece.name} />
+            </ViewTransition>
             {/* Shown on touch screens only, where the card cannot flip. */}
             <span className="card-chip" aria-hidden="true">
               →

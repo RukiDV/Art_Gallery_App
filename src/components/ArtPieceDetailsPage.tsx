@@ -1,3 +1,4 @@
+import { ViewTransition } from "react";
 import { Link, useParams } from "react-router";
 
 import type { ArtPiece, ArtPieceComment } from "../types";
@@ -48,7 +49,9 @@ export default function ArtPieceDetailsPage({
       <Link to="/art-pieces">Back</Link>
       <div className="details-card">
         <div className="details-media">
-          <img src={artPiece.imageSource} alt={artPiece.name} />
+          <ViewTransition name={`art-picture-${artPiece.slug}`} default="none">
+            <img src={artPiece.imageSource} alt={artPiece.name} />
+          </ViewTransition>
           <FavoriteButton
             artPieceName={artPiece.name}
             isFavorite={isFavorite(artPiece.slug)}
