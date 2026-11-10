@@ -194,6 +194,7 @@ describe("ThemeToggle: circular reveal", () => {
   afterEach(() => {
     Reflect.deleteProperty(document, "startViewTransition");
     Reflect.deleteProperty(root, "animate");
+    Reflect.deleteProperty(document, "getAnimations");
     root.classList.remove("theme-reveal");
   });
 
@@ -276,6 +277,40 @@ describe("ThemeToggle: circular reveal", () => {
     render(<ThemeToggle />);
 
     await user.click(
+      screen.getByRole("button", { name: "Switch to dark mode" })
+    );
+
+    expect(startViewTransition).not.toHaveBeenCalled();
+    expect(root).toHaveAttribute("data-theme", "dark");
+  });
+
+  it("does not start a second transition while the first one is still running, and still switches", () => {
+    mockColorScheme("light");
+    const startViewTransition = stubViewTransition(new Promise(() => {}));
+    render(<ThemeToggle />);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Switch to dark mode" })
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Switch to light mode" })
+    );
+
+    expect(startViewTransition).toHaveBeenCalledTimes(1);
+    expect(root).toHaveAttribute("data-theme", "light");
+  });
+
+  it("does not start a transition while the page is already running one, such as a picture gliding to another page", () => {
+    mockColorScheme("light");
+    const startViewTransition = stubViewTransition();
+    Object.assign(document, {
+      getAnimations: () => [
+        { effect: { pseudoElement: "::view-transition-group(art-picture-x)" } },
+      ],
+    });
+    render(<ThemeToggle />);
+
+    fireEvent.click(
       screen.getByRole("button", { name: "Switch to dark mode" })
     );
 

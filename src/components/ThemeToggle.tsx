@@ -63,9 +63,23 @@ export default function ThemeToggle() {
       "(prefers-reduced-motion: reduce)"
     ).matches;
 
-    // Without view transitions, or for people who prefer less motion, the
-    // mode simply switches.
-    if (!document.startViewTransition || prefersLessMotion) {
+    // Two view transitions at once (a quick second click, or a picture still
+    // gliding to another page) are asked too much of the browser.
+    const isTransitionRunning =
+      root.classList.contains("theme-reveal") ||
+      (document.getAnimations?.() ?? []).some((animation) =>
+        (animation.effect as KeyframeEffect | null)?.pseudoElement?.startsWith(
+          "::view-transition"
+        )
+      );
+
+    // Without view transitions, for people who prefer less motion, or while
+    // another transition runs, the mode simply switches.
+    if (
+      !document.startViewTransition ||
+      prefersLessMotion ||
+      isTransitionRunning
+    ) {
       applyTheme(nextTheme);
       return;
     }
