@@ -293,6 +293,50 @@ describe("Comments editing", () => {
     ).toHaveFocus();
   });
 
+  it("gives the focus back after a Save without changes", async () => {
+    const user = userEvent.setup();
+    renderComments();
+
+    await user.click(
+      screen.getByRole("button", { name: "Edit comment: I love the colors." })
+    );
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(
+      screen.getByRole("button", { name: "Edit comment: I love the colors." })
+    ).toHaveFocus();
+  });
+
+  it("leaves the other open form alone when one form is closed", async () => {
+    const user = userEvent.setup();
+    renderComments();
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Edit comment: What a beautiful sky!",
+      })
+    );
+    await user.click(
+      screen.getByRole("button", { name: "Edit comment: I love the colors." })
+    );
+    const otherField = screen.getByRole("textbox", {
+      name: "Edit your comment: I love the colors.",
+    });
+    const [cancelOfFirstForm] = screen.getAllByRole("button", {
+      name: "Cancel",
+    });
+    await user.click(cancelOfFirstForm);
+
+    expect(
+      screen.getByRole("button", {
+        name: "Edit comment: What a beautiful sky!",
+      })
+    ).toHaveFocus();
+    expect(otherField).toBeInTheDocument();
+    expect(otherField).not.toHaveFocus();
+    expect(otherField).toHaveValue("I love the colors.");
+  });
+
   it("only edits the comment whose Edit button was clicked", async () => {
     const user = userEvent.setup();
     renderComments();
