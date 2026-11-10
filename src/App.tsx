@@ -184,7 +184,7 @@ export default function App() {
             path="*"
             element={
               <div className="status-message">
-                <EmptyFrame symbol="?" />
+                <EmptyFrame symbol="404" />
                 <p>Page not found</p>
                 <div className="status-actions">
                   <Link to="/" className="button-link button-primary">

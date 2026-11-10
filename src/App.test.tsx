@@ -1899,6 +1899,7 @@ describe("App: status pages with an empty frame", () => {
 
     expect(await screen.findByText("Page not found")).toBeInTheDocument();
     expect(frameOf(container)).toHaveAttribute("aria-hidden", "true");
+    expect(frameOf(container)).toHaveTextContent("404");
     expect(
       screen.getByRole("link", { name: "Back to the Spotlight" })
     ).toHaveAttribute("href", "/");
