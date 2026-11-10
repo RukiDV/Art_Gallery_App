@@ -73,7 +73,7 @@ async function startEditingComment(
   await user.click(
     screen.getByRole("button", { name: `Edit comment: ${commentText}` })
   );
-  const field = screen.getByRole("textbox", { name: "Edit your comment" });
+  const field = screen.getByRole("textbox", { name: /^Edit your comment/ });
   await user.clear(field);
   if (newText !== "") {
     await user.type(field, newText);
@@ -635,7 +635,7 @@ describe("App", () => {
     await user.click(
       screen.getAllByRole("button", { name: "Edit comment: Nice!" })[1]
     );
-    const field = screen.getByRole("textbox", { name: "Edit your comment" });
+    const field = screen.getByRole("textbox", { name: /^Edit your comment/ });
     await user.clear(field);
     await user.type(field, "Nice, really!");
     await user.click(screen.getByRole("button", { name: "Save" }));
@@ -702,7 +702,7 @@ describe("App", () => {
     await user.click(screen.getByRole("button", { name: "Save" }));
 
     expect(
-      screen.getByRole("textbox", { name: "Edit your comment" })
+      screen.getByRole("textbox", { name: /^Edit your comment/ })
     ).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Cancel" }));
@@ -725,7 +725,7 @@ describe("App", () => {
     expect(screen.getByText("Same text")).toBeInTheDocument();
     expect(screen.queryByText("edited")).not.toBeInTheDocument();
     expect(
-      screen.queryByRole("textbox", { name: "Edit your comment" })
+      screen.queryByRole("textbox", { name: /^Edit your comment/ })
     ).not.toBeInTheDocument();
   });
 

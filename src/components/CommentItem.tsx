@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import type { ArtPieceComment } from "../types";
 import CommentEditForm from "./CommentEditForm";
@@ -15,9 +15,19 @@ export default function CommentItem({
   onEdit,
 }: CommentItemProps) {
   const [isEditing, setIsEditing] = useState(false);
+  const editButtonRef = useRef<HTMLButtonElement>(null);
+  const wasEditing = useRef(false);
+
+  // The form replaces the Edit button: give the focus back when it closes.
+  useEffect(() => {
+    if (wasEditing.current && !isEditing) {
+      editButtonRef.current?.focus();
+    }
+    wasEditing.current = isEditing;
+  }, [isEditing]);
 
   function handleSave(text: string) {
-    if (text !== comment.text) {
+    if (text !== comment.text.trim()) {
       onEdit(comment.id, text);
     }
     setIsEditing(false);
@@ -38,11 +48,19 @@ export default function CommentItem({
         <time dateTime={comment.date}>
           {new Date(comment.date).toLocaleString()}
         </time>
-        {comment.edited && <span className="comment-edited">edited</span>}
+        {comment.edited && (
+          <>
+            <span className="comment-separator" aria-hidden="true">
+              ·
+            </span>
+            <span className="comment-edited">edited</span>
+          </>
+        )}
       </p>
       {!isEditing && (
         <>
           <button
+            ref={editButtonRef}
             type="button"
             aria-label={`Edit comment: ${comment.text}`}
             onClick={() => setIsEditing(true)}

@@ -207,10 +207,90 @@ describe("Comments editing", () => {
     );
 
     expect(
-      screen.getByRole("textbox", { name: "Edit your comment" })
+      screen.getByRole("textbox", { name: /^Edit your comment/ })
     ).toHaveValue("I love the colors.");
     expect(screen.getByRole("button", { name: "Save" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Cancel" })).toBeInTheDocument();
+  });
+
+  it("tells the text fields apart when several comments are edited at once", async () => {
+    const user = userEvent.setup();
+    renderComments();
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Edit comment: What a beautiful sky!",
+      })
+    );
+    await user.click(
+      screen.getByRole("button", { name: "Edit comment: I love the colors." })
+    );
+
+    expect(
+      screen.getByRole("textbox", {
+        name: "Edit your comment: What a beautiful sky!",
+      })
+    ).toHaveValue("What a beautiful sky!");
+    expect(
+      screen.getByRole("textbox", {
+        name: "Edit your comment: I love the colors.",
+      })
+    ).toHaveValue("I love the colors.");
+  });
+
+  it("moves the focus into the text field when the form opens", async () => {
+    const user = userEvent.setup();
+    renderComments();
+
+    await user.click(
+      screen.getByRole("button", { name: "Edit comment: I love the colors." })
+    );
+
+    expect(
+      screen.getByRole("textbox", {
+        name: "Edit your comment: I love the colors.",
+      })
+    ).toHaveFocus();
+  });
+
+  it("does not take the focus before anything is edited", () => {
+    renderComments();
+
+    expect(document.body).toHaveFocus();
+  });
+
+  it("gives the focus back to the Edit button after Cancel", async () => {
+    const user = userEvent.setup();
+    renderComments();
+
+    await user.click(
+      screen.getByRole("button", { name: "Edit comment: I love the colors." })
+    );
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
+
+    expect(
+      screen.getByRole("button", { name: "Edit comment: I love the colors." })
+    ).toHaveFocus();
+  });
+
+  it("gives the focus back to the Edit button after Save", async () => {
+    const user = userEvent.setup();
+    renderComments();
+
+    await user.click(
+      screen.getByRole("button", { name: "Edit comment: I love the colors." })
+    );
+    await user.type(
+      screen.getByRole("textbox", {
+        name: "Edit your comment: I love the colors.",
+      }),
+      " a lot"
+    );
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(
+      screen.getByRole("button", { name: "Edit comment: I love the colors." })
+    ).toHaveFocus();
   });
 
   it("only edits the comment whose Edit button was clicked", async () => {
@@ -245,7 +325,7 @@ describe("Comments editing", () => {
     await user.click(
       screen.getByRole("button", { name: "Edit comment: I love the colors." })
     );
-    const field = screen.getByRole("textbox", { name: "Edit your comment" });
+    const field = screen.getByRole("textbox", { name: /^Edit your comment/ });
     await user.clear(field);
     await user.type(field, "I adore the colors.");
     await user.click(screen.getByRole("button", { name: "Save" }));
@@ -264,7 +344,7 @@ describe("Comments editing", () => {
       screen.getByRole("button", { name: "Edit comment: I love the colors." })
     );
     await user.type(
-      screen.getByRole("textbox", { name: "Edit your comment" }),
+      screen.getByRole("textbox", { name: /^Edit your comment/ }),
       " a lot"
     );
     await user.click(screen.getByRole("button", { name: "Cancel" }));
@@ -283,13 +363,13 @@ describe("Comments editing", () => {
       screen.getByRole("button", { name: "Edit comment: I love the colors." })
     );
     await user.clear(
-      screen.getByRole("textbox", { name: "Edit your comment" })
+      screen.getByRole("textbox", { name: /^Edit your comment/ })
     );
     await user.click(screen.getByRole("button", { name: "Save" }));
 
     expect(onEditComment).not.toHaveBeenCalled();
     expect(
-      screen.getByRole("textbox", { name: "Edit your comment" })
+      screen.getByRole("textbox", { name: /^Edit your comment/ })
     ).toBeInTheDocument();
   });
 
@@ -302,9 +382,23 @@ describe("Comments editing", () => {
       screen.getByRole("button", { name: "Edit comment: I love the colors." })
     );
     await user.type(
-      screen.getByRole("textbox", { name: "Edit your comment" }),
+      screen.getByRole("textbox", { name: /^Edit your comment/ }),
       "   "
     );
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(onEditComment).not.toHaveBeenCalled();
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+  });
+
+  it("does not count a Save without changes as an edit when the saved text has spaces around it", async () => {
+    const user = userEvent.setup();
+    const onEditComment = vi.fn();
+    renderComments(onEditComment, [
+      { id: "c9", text: "  padded  ", date: "2026-11-09T10:15:00.000Z" },
+    ]);
+
+    await user.click(screen.getByRole("button", { name: /^Edit comment/ }));
     await user.click(screen.getByRole("button", { name: "Save" }));
 
     expect(onEditComment).not.toHaveBeenCalled();
@@ -322,6 +416,17 @@ describe("Comments editing", () => {
     expect(screen.getAllByText("edited")).toHaveLength(1);
     expect(items[0]).toHaveTextContent("edited");
     expect(items[1]).not.toHaveTextContent("edited");
+  });
+
+  it("hides the dot between the date and the label from screen readers", () => {
+    renderComments(() => {}, [
+      { ...comments[0], edited: true },
+      { ...comments[1] },
+    ]);
+
+    expect(screen.getAllByText("·")).toHaveLength(1);
+    expect(screen.getByText("·")).toHaveAttribute("aria-hidden", "true");
+    expect(screen.getByText("edited")).not.toHaveAttribute("aria-hidden");
   });
 
   it("keeps the date and time next to the label of an edited comment", () => {

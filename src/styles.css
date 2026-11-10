@@ -130,8 +130,7 @@ nav a.active {
   color: #666;
 }
 
-.comment-edited::before {
-  content: "·";
+.comment-separator {
   margin: 0 0.4rem;
 }
 

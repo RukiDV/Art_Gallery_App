@@ -143,7 +143,7 @@ describe("ArtPieceDetailsPage", () => {
         name: "Edit comment: What a beautiful sky!",
       })
     );
-    const field = screen.getByRole("textbox", { name: "Edit your comment" });
+    const field = screen.getByRole("textbox", { name: /^Edit your comment/ });
     await user.clear(field);
     await user.type(field, "What a stormy sky!");
     await user.click(screen.getByRole("button", { name: "Save" }));
