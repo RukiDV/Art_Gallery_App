@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 type FavoriteButtonProps = {
   artPieceName: string;
   isFavorite: boolean;
@@ -9,13 +11,20 @@ export default function FavoriteButton({
   isFavorite,
   onToggle,
 }: FavoriteButtonProps) {
+  // Only marking a favorite pops; a page that opens with favorites stays calm.
+  const [isPopping, setIsPopping] = useState(false);
+
   return (
     <button
       type="button"
-      className="favorite-button"
+      className={isPopping ? "favorite-button favorite-pop" : "favorite-button"}
       aria-pressed={isFavorite}
       aria-label={`Favorite ${artPieceName}`}
-      onClick={onToggle}
+      onClick={() => {
+        setIsPopping(!isFavorite);
+        onToggle();
+      }}
+      onAnimationEnd={() => setIsPopping(false)}
     >
       <svg
         width="20"

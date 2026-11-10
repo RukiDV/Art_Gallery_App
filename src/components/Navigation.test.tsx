@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 
 import Navigation from "./Navigation";
@@ -153,5 +153,58 @@ describe("Navigation icons", () => {
       "Gallery",
       "Favorites (2)",
     ]);
+  });
+});
+
+describe("Navigation: favorites counter bump", () => {
+  function renderWithCount(count: number) {
+    const view = render(
+      <MemoryRouter>
+        <Navigation favoritesCount={count} />
+      </MemoryRouter>
+    );
+    const rerenderWithCount = (next: number) =>
+      view.rerender(
+        <MemoryRouter>
+          <Navigation favoritesCount={next} />
+        </MemoryRouter>
+      );
+    return { rerenderWithCount };
+  }
+
+  function favoritesLink() {
+    return screen.getByRole("link", { name: /^Favorites/ });
+  }
+
+  it("does not bump when the page opens", () => {
+    renderWithCount(2);
+
+    expect(favoritesLink()).not.toHaveClass("count-bump");
+  });
+
+  it("bumps when the number of favorites changes, and stops when the animation ends", () => {
+    const { rerenderWithCount } = renderWithCount(2);
+
+    rerenderWithCount(3);
+    expect(favoritesLink()).toHaveClass("count-bump");
+
+    fireEvent.animationEnd(favoritesLink());
+    expect(favoritesLink()).not.toHaveClass("count-bump");
+  });
+
+  it("bumps when a favorite is removed too", () => {
+    const { rerenderWithCount } = renderWithCount(2);
+
+    rerenderWithCount(1);
+
+    expect(favoritesLink()).toHaveClass("count-bump");
+  });
+
+  it("does not bump when it renders again with the same number", () => {
+    const { rerenderWithCount } = renderWithCount(2);
+
+    rerenderWithCount(2);
+
+    expect(favoritesLink()).not.toHaveClass("count-bump");
   });
 });
