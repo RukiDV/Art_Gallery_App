@@ -34,15 +34,14 @@ export default function SpotlightPage({
   }, [isSlideshowRunning, artPiece, artPieces]);
 
   return (
-    <>
-      <figure
-        className="art-piece spotlight"
-        aria-live="polite"
-        // The first palette color tints the glow and the label line.
-        style={
-          { "--art-glow": artPiece.colors[0] ?? "transparent" } as CSSProperties
-        }
-      >
+    <div
+      className="spotlight-page"
+      // The first palette color tints the page glow, the picture glow and the label line.
+      style={
+        { "--art-glow": artPiece.colors[0] ?? "transparent" } as CSSProperties
+      }
+    >
+      <figure className="art-piece spotlight" aria-live="polite">
         {/* The blurred copy of the picture behind it; a new one fades in. */}
         <div
           key={`backdrop-${artPiece.slug}`}
@@ -71,6 +70,14 @@ export default function SpotlightPage({
             ))}
           </span>
         </figcaption>
+        {isSlideshowRunning && (
+          <div
+            key={`progress-${artPiece.slug}`}
+            className="spotlight-progress"
+            aria-hidden="true"
+            style={{ animationDuration: `${SLIDE_DURATION_MS}ms` }}
+          />
+        )}
         <FavoriteButton
           artPieceName={artPiece.name}
           isFavorite={isFavorite(artPiece.slug)}
@@ -118,7 +125,7 @@ export default function SpotlightPage({
           </button>
         </div>
       )}
-    </>
+    </div>
   );
 }
 

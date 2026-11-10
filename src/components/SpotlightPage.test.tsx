@@ -499,3 +499,50 @@ describe("SpotlightPage: palette dots", () => {
     ]);
   });
 });
+
+describe("SpotlightPage: slideshow progress line", () => {
+  function progressLine(container: HTMLElement) {
+    return container.querySelector(".spotlight-progress");
+  }
+
+  it("is not shown while the slideshow is stopped", () => {
+    const { container } = render(spotlight());
+
+    expect(progressLine(container)).not.toBeInTheDocument();
+  });
+
+  it("is shown, hidden from screen readers and lasting 5 seconds, while the slideshow runs", async () => {
+    const user = userEvent.setup();
+    const { container } = render(spotlight());
+
+    await user.click(screen.getByRole("button", { name: "Start slideshow" }));
+
+    expect(progressLine(container)).toHaveAttribute("aria-hidden", "true");
+    expect(progressLine(container)).toHaveStyle({
+      animationDuration: "5000ms",
+    });
+  });
+
+  it("is removed again when the slideshow is stopped", async () => {
+    const user = userEvent.setup();
+    const { container } = render(spotlight());
+
+    await user.click(screen.getByRole("button", { name: "Start slideshow" }));
+    await user.click(screen.getByRole("button", { name: "Stop slideshow" }));
+
+    expect(progressLine(container)).not.toBeInTheDocument();
+  });
+
+  it("starts over as a new element when another piece is shown", async () => {
+    mockRandomFraction(0);
+    const user = userEvent.setup();
+    const { container } = render(spotlight());
+    await user.click(screen.getByRole("button", { name: "Start slideshow" }));
+    const before = progressLine(container);
+
+    await user.click(screen.getByRole("button", { name: "Show another" }));
+
+    expect(progressLine(container)).toBeInTheDocument();
+    expect(progressLine(container)).not.toBe(before);
+  });
+});
