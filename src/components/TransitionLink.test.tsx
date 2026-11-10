@@ -54,7 +54,14 @@ describe("TransitionLink", () => {
   ])(
     "leaves a click with %s to the browser: no navigation and no glide",
     (_name, eventInit) => {
+      // The browser would follow the link now; jsdom cannot, so it is stopped
+      // here, after the link has had its chance to call preventDefault.
+      const stopBrowserNavigation = (event: Event) => event.preventDefault();
+      document.addEventListener("click", stopBrowserNavigation);
+
       fireEvent.click(renderLink(), eventInit);
+
+      document.removeEventListener("click", stopBrowserNavigation);
 
       expect(screen.getByText("At /start")).toBeInTheDocument();
       expect(addTransitionType).not.toHaveBeenCalled();
