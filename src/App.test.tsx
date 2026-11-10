@@ -1870,3 +1870,19 @@ describe("App: dark mode", () => {
     expect(localStorage.getItem(STORAGE_KEY)).toBe(before);
   });
 });
+
+describe("App: header", () => {
+  it("has a banner with the heading Art Gallery on every page", async () => {
+    stubFetchWithArtPieces();
+
+    renderApp("/art-pieces");
+
+    expect(
+      within(screen.getByRole("banner")).getByRole("heading", {
+        level: 1,
+        name: "Art Gallery",
+      })
+    ).toBeInTheDocument();
+    await screen.findByRole("link", { name: "Spotlight" });
+  });
+});

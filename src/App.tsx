@@ -106,17 +106,17 @@ export default function App() {
 
     if (error && !isLoadingWithoutData) {
       return (
-        <>
+        <div className="status-message">
           <p>Failed to load the art pieces. Please try again later.</p>
           <button type="button" onClick={() => mutate()}>
             Try again
           </button>
-        </>
+        </div>
       );
     }
 
     if (!artPieces) {
-      return <p>Loading art pieces…</p>;
+      return <p className="status-message">Loading art pieces…</p>;
     }
 
     return render(artPieces);
@@ -124,8 +124,10 @@ export default function App() {
 
   return (
     <>
-      <main>
+      <header className="site-header">
         <h1>Art Gallery</h1>
+      </header>
+      <main>
         <Routes>
           <Route
             path="/"
@@ -171,7 +173,10 @@ export default function App() {
               />
             ))}
           />
-          <Route path="*" element={<p>Page not found</p>} />
+          <Route
+            path="*"
+            element={<p className="status-message">Page not found</p>}
+          />
         </Routes>
       </main>
       <Navigation favoritesCount={favoritesCount} />

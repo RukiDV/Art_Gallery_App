@@ -138,3 +138,20 @@ describe("Navigation theme button", () => {
     expect(screen.getAllByRole("link")).toHaveLength(3);
   });
 });
+
+describe("Navigation icons", () => {
+  it("gives every link a decorative icon and keeps its text", () => {
+    renderNavigation("/", 2);
+
+    const links = screen.getAllByRole("link");
+
+    links.forEach((link) => {
+      expect(link.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
+    });
+    expect(links.map((link) => link.textContent)).toEqual([
+      "Spotlight",
+      "Gallery",
+      "Favorites (2)",
+    ]);
+  });
+});
