@@ -4,6 +4,7 @@ import { MemoryRouter } from "react-router";
 import { SWRConfig } from "swr";
 
 import App from "./App";
+import { mockColorScheme } from "./mockColorScheme";
 import { mockRandomFraction } from "./mockRandom";
 import { STORAGE_KEY } from "./storage";
 import type { ArtPiece } from "./types";
@@ -1794,5 +1795,78 @@ describe("App: slideshow", () => {
     expect(
       screen.queryByRole("button", { name: /slideshow/ })
     ).not.toBeInTheDocument();
+  });
+});
+
+describe("App: dark mode", () => {
+  it.each([
+    "/",
+    "/art-pieces",
+    "/favorites",
+    "/art-pieces/the-harvesters",
+    "/unknown",
+  ])("has the theme button on %s", async (route) => {
+    mockColorScheme("light");
+    stubFetchWithArtPieces();
+
+    renderApp(route);
+
+    expect(
+      await screen.findByRole("button", { name: "Switch to dark mode" })
+    ).toBeInTheDocument();
+  });
+
+  it("keeps the dark mode on every page after switching", async () => {
+    const user = userEvent.setup();
+    mockColorScheme("light");
+    stubFetchWithArtPieces();
+    renderApp("/");
+
+    await user.click(
+      await screen.findByRole("button", { name: "Switch to dark mode" })
+    );
+    expect(document.documentElement).toHaveAttribute("data-theme", "dark");
+
+    for (const link of ["Gallery", "Favorites", "Spotlight"]) {
+      await user.click(screen.getByRole("link", { name: new RegExp(link) }));
+
+      expect(document.documentElement).toHaveAttribute("data-theme", "dark");
+      expect(
+        screen.getByRole("button", { name: "Switch to light mode" })
+      ).toBeInTheDocument();
+    }
+  });
+
+  it("keeps the choice after the app is reloaded", async () => {
+    const user = userEvent.setup();
+    mockColorScheme("light");
+    stubFetchWithArtPieces();
+    const { unmount } = renderApp("/");
+    await user.click(
+      await screen.findByRole("button", { name: "Switch to dark mode" })
+    );
+    unmount();
+    delete document.documentElement.dataset.theme;
+
+    renderApp("/");
+
+    expect(
+      await screen.findByRole("button", { name: "Switch to light mode" })
+    ).toBeInTheDocument();
+    expect(document.documentElement).toHaveAttribute("data-theme", "dark");
+  });
+
+  it("does not change the saved art pieces data", async () => {
+    const user = userEvent.setup();
+    mockColorScheme("light");
+    stubFetchWithArtPieces();
+    renderApp("/");
+    const before = localStorage.getItem(STORAGE_KEY);
+
+    await user.click(
+      await screen.findByRole("button", { name: "Switch to dark mode" })
+    );
+
+    expect(localStorage.getItem(STORAGE_KEY)).toBe(before);
   });
 });

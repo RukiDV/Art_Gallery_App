@@ -1,5 +1,7 @@
 import { NavLink } from "react-router";
 
+import ThemeToggle from "./ThemeToggle";
+
 type NavigationProps = {
   favoritesCount: number;
 };
@@ -14,6 +16,7 @@ export default function Navigation({ favoritesCount }: NavigationProps) {
       <NavLink to="/favorites">
         {favoritesCount > 0 ? `Favorites (${favoritesCount})` : "Favorites"}
       </NavLink>
+      <ThemeToggle />
     </nav>
   );
 }
