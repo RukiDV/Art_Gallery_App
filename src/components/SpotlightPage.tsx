@@ -1,4 +1,4 @@
-import { type CSSProperties, useEffect, useState } from "react";
+import { type CSSProperties, type ReactNode, useEffect, useState } from "react";
 
 import { getRandomArtPiece } from "../randomArtPiece";
 import type { ArtPiece } from "../types";
@@ -38,20 +38,38 @@ export default function SpotlightPage({
       <figure
         className="art-piece spotlight"
         aria-live="polite"
-        // The blurred copy of the picture behind it (see styles.css).
+        // The first palette color tints the glow and the label line.
         style={
-          {
-            "--art-image": `url(${JSON.stringify(artPiece.imageSource)})`,
-          } as CSSProperties
+          { "--art-glow": artPiece.colors[0] ?? "transparent" } as CSSProperties
         }
       >
-        <img
-          key={artPiece.slug}
-          src={artPiece.imageSource}
-          alt={artPiece.name}
+        {/* The blurred copy of the picture behind it; a new one fades in. */}
+        <div
+          key={`backdrop-${artPiece.slug}`}
+          className="spotlight-backdrop"
+          aria-hidden="true"
+          style={{
+            backgroundImage: `url(${JSON.stringify(artPiece.imageSource)})`,
+          }}
         />
+        <div className="spotlight-stage">
+          <img
+            key={artPiece.slug}
+            src={artPiece.imageSource}
+            alt={artPiece.name}
+          />
+        </div>
         <figcaption>
           <p>{artPiece.artist}</p>
+          <span className="spotlight-palette" aria-hidden="true">
+            {artPiece.colors.map((color) => (
+              <span
+                key={color}
+                className="spotlight-swatch"
+                style={{ backgroundColor: color }}
+              />
+            ))}
+          </span>
         </figcaption>
         <FavoriteButton
           artPieceName={artPiece.name}
@@ -63,21 +81,61 @@ export default function SpotlightPage({
         <div className="spotlight-actions">
           <button
             type="button"
-            className="button-primary"
+            className="button-primary icon-button"
+            aria-label="Show another"
+            title="Show another"
             onClick={() =>
               setArtPiece(getRandomArtPiece(artPieces, artPiece.slug))
             }
           >
-            Show another
+            <Icon>
+              <path d="M16 3h5v5" />
+              <path d="M4 20 21 3" />
+              <path d="M21 16v5h-5" />
+              <path d="m15 15 6 6" />
+              <path d="m4 4 5 5" />
+            </Icon>
           </button>
           <button
             type="button"
+            className="icon-button"
+            aria-label={
+              isSlideshowRunning ? "Stop slideshow" : "Start slideshow"
+            }
+            title={isSlideshowRunning ? "Stop slideshow" : "Start slideshow"}
             onClick={() => setIsSlideshowRunning((isRunning) => !isRunning)}
           >
-            {isSlideshowRunning ? "Stop slideshow" : "Start slideshow"}
+            <Icon>
+              {isSlideshowRunning ? (
+                <>
+                  <rect x="6" y="5" width="4" height="14" rx="1" />
+                  <rect x="14" y="5" width="4" height="14" rx="1" />
+                </>
+              ) : (
+                <path d="M7 4.5v15a1 1 0 0 0 1.5.86l12-7.5a1 1 0 0 0 0-1.72l-12-7.5A1 1 0 0 0 7 4.5Z" />
+              )}
+            </Icon>
           </button>
         </div>
       )}
     </>
+  );
+}
+
+function Icon({ children }: { children: ReactNode }) {
+  return (
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {children}
+    </svg>
   );
 }
