@@ -397,6 +397,145 @@ label {
   color: var(--muted-text);
 }
 
+/* Cards flip on hover or keyboard focus to show year, genre and palette.
+   The faces carry the shape and shadow, so nothing clips the turning card. */
+.art-card {
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
+  background: none;
+  box-shadow: none;
+}
+
+.art-card > a {
+  display: flex;
+  flex: 1;
+  perspective: 1200px;
+}
+
+.card-inner {
+  display: grid;
+  flex: 1;
+  transition: transform 0.6s var(--ease);
+  transform-style: preserve-3d;
+}
+
+.card-front,
+.card-back {
+  grid-area: 1 / 1;
+  overflow: hidden;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  backface-visibility: hidden;
+}
+
+.card-front {
+  display: flex;
+  flex-direction: column;
+}
+
+.card-front figcaption {
+  flex: 1;
+}
+
+.card-back {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-5) var(--space-5) calc(2.5rem + 2 * var(--space-3));
+  color: var(--accent-contrast);
+  text-align: center;
+  background: var(--accent);
+  transform: rotateY(180deg);
+}
+
+.card-year {
+  font-family: var(--font-heading);
+  font-size: 2.25rem;
+  line-height: 1;
+}
+
+.card-genre {
+  padding: var(--space-1) var(--space-3);
+  font-size: 0.85rem;
+  border: 1px solid currentcolor;
+  border-radius: 999px;
+}
+
+.card-palette {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.card-swatch {
+  width: 1.1rem;
+  height: 1.1rem;
+  border: 2px solid var(--accent-contrast);
+  border-radius: 50%;
+}
+
+.card-cta {
+  margin-top: var(--space-2);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 0.25em;
+}
+
+/* The arrow chip is for touch screens, where the card cannot flip. */
+.card-chip {
+  position: absolute;
+  top: var(--space-3);
+  left: var(--space-3);
+  display: none;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  color: var(--favorite-icon);
+  background: color-mix(in srgb, var(--favorite-background) 85%, transparent);
+  border-radius: 50%;
+  box-shadow: 0 1px 4px #0003;
+  backdrop-filter: blur(8px);
+}
+
+@media (hover: none) {
+  .card-chip {
+    display: grid;
+  }
+}
+
+/* The picture does not zoom as well while the card flips. */
+.art-card a:hover img,
+.art-card a:focus-visible img {
+  transform: none;
+}
+
+@media (hover: hover) {
+  .art-card:hover .card-inner,
+  .art-card:has(> a:focus-visible) .card-inner {
+    transform: rotateY(180deg);
+  }
+}
+
+/* No turning for people who prefer less motion: the back fades in instead. */
+@media (prefers-reduced-motion: reduce) {
+  .card-inner {
+    transform: none !important;
+  }
+
+  .card-back {
+    opacity: 0;
+    transform: none;
+  }
+
+  .art-card:hover .card-back,
+  .art-card:has(> a:focus-visible) .card-back {
+    opacity: 1;
+  }
+}
+
 /* Registered so the glow color changes smoothly from one piece to the next. */
 @property --art-glow {
   syntax: "<color>";
