@@ -525,22 +525,52 @@ label {
   box-shadow: var(--shadow);
 }
 
-.details-info h2 {
-  margin: 0;
-  font-size: clamp(1.75rem, 4vw, 2.25rem);
+/* The info is a card with room to breathe. */
+.details-info {
+  align-self: start;
+  padding: var(--space-6);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
 }
 
-.details-info p {
+.details-info h2 {
+  margin: 0;
+  font-size: clamp(1.9rem, 4vw, 2.5rem);
+  line-height: 1.15;
+}
+
+.details-info :where(p) {
   margin: 0;
 }
 
 .details-artist {
-  margin-top: var(--space-1);
-  font-size: 1.15rem;
+  margin-top: var(--space-3);
+  font-family: var(--font-heading);
+  font-size: 1.35rem;
+  color: var(--accent);
 }
 
-.details-meta {
+.details-year,
+.details-genre {
+  display: inline-block;
+  margin-top: var(--space-4);
+}
+
+.details-year {
+  margin-right: var(--space-3);
   color: var(--muted-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.details-genre {
+  padding: var(--space-1) var(--space-3);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text);
+  background: var(--accent-soft);
+  border-radius: 999px;
 }
 
 .palette {
@@ -548,8 +578,9 @@ label {
   flex-wrap: wrap;
   gap: var(--space-3);
   margin: var(--space-5) 0 0;
-  padding: 0;
+  padding: var(--space-5) 0 0;
   list-style: none;
+  border-top: 1px solid var(--border);
 }
 
 .palette li {

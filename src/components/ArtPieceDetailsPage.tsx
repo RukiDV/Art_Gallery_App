@@ -46,8 +46,8 @@ export default function ArtPieceDetailsPage({
       <div className="details-info">
         <h2>{artPiece.name}</h2>
         <p className="details-artist">{artPiece.artist}</p>
-        <p className="details-meta">{artPiece.year}</p>
-        <p className="details-meta">{artPiece.genre}</p>
+        <p className="details-year">{artPiece.year}</p>
+        <p className="details-genre">{artPiece.genre}</p>
         <ColorPalette colors={artPiece.colors} />
       </div>
       <div className="details-comments">
