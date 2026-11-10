@@ -1,27 +1,44 @@
-import type { ArtPieceComment, ArtPieceInfo } from "./types";
+import type { ArtPieceInfo } from "./types";
 
 export const STORAGE_KEY = "art-pieces-info";
+
+// Comments saved before they had an id are still valid: they get one on load.
+type StoredComment = { id?: string; text: string; date: string };
+type StoredArtPieceInfo = Omit<ArtPieceInfo, "comments"> & {
+  comments: StoredComment[];
+};
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
 
-function isArtPieceComment(value: unknown): value is ArtPieceComment {
+function isStoredComment(value: unknown): value is StoredComment {
   return (
     isRecord(value) &&
+    (value.id === undefined || typeof value.id === "string") &&
     typeof value.text === "string" &&
     typeof value.date === "string"
   );
 }
 
-function isArtPieceInfo(value: unknown): value is ArtPieceInfo {
+function isStoredArtPieceInfo(value: unknown): value is StoredArtPieceInfo {
   return (
     isRecord(value) &&
     typeof value.slug === "string" &&
     typeof value.isFavorite === "boolean" &&
     Array.isArray(value.comments) &&
-    value.comments.every(isArtPieceComment)
+    value.comments.every(isStoredComment)
   );
+}
+
+function withCommentIds(info: StoredArtPieceInfo): ArtPieceInfo {
+  return {
+    ...info,
+    comments: info.comments.map((comment) => ({
+      ...comment,
+      id: comment.id ?? crypto.randomUUID(),
+    })),
+  };
 }
 
 export function loadArtPiecesInfo(): ArtPieceInfo[] {
@@ -32,7 +49,9 @@ export function loadArtPiecesInfo(): ArtPieceInfo[] {
     }
 
     const parsedValue: unknown = JSON.parse(storedValue);
-    return Array.isArray(parsedValue) ? parsedValue.filter(isArtPieceInfo) : [];
+    return Array.isArray(parsedValue)
+      ? parsedValue.filter(isStoredArtPieceInfo).map(withCommentIds)
+      : [];
   } catch {
     return [];
   }

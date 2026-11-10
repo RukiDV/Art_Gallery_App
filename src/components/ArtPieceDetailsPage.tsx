@@ -12,6 +12,7 @@ type ArtPieceDetailsPageProps = {
   onToggleFavorite: (slug: string) => void;
   getComments: (slug: string) => ArtPieceComment[];
   onAddComment: (slug: string, text: string) => void;
+  onDeleteComment: (slug: string, id: string) => void;
 };
 
 export default function ArtPieceDetailsPage({
@@ -20,6 +21,7 @@ export default function ArtPieceDetailsPage({
   onToggleFavorite,
   getComments,
   onAddComment,
+  onDeleteComment,
 }: ArtPieceDetailsPageProps) {
   const { slug } = useParams();
   const artPiece = artPieces.find((piece) => piece.slug === slug);
@@ -42,7 +44,10 @@ export default function ArtPieceDetailsPage({
       <p>{artPiece.year}</p>
       <p>{artPiece.genre}</p>
       <ColorPalette colors={artPiece.colors} />
-      <Comments comments={getComments(artPiece.slug)} />
+      <Comments
+        comments={getComments(artPiece.slug)}
+        onDeleteComment={(id) => onDeleteComment(artPiece.slug, id)}
+      />
       <CommentForm onAddComment={(text) => onAddComment(artPiece.slug, text)} />
     </article>
   );

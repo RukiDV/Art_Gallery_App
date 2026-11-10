@@ -5,7 +5,13 @@ const info: ArtPieceInfo[] = [
   {
     slug: "the-harvesters",
     isFavorite: true,
-    comments: [{ text: "What a view!", date: "2026-11-09T10:15:00.000Z" }],
+    comments: [
+      {
+        id: "comment-1",
+        text: "What a view!",
+        date: "2026-11-09T10:15:00.000Z",
+      },
+    ],
   },
   { slug: "wheat-field-with-cypresses", isFavorite: false, comments: [] },
 ];
@@ -48,6 +54,7 @@ describe("loadArtPiecesInfo", () => {
 
 describe("loadArtPiecesInfo with broken entries", () => {
   const validComment = {
+    id: "comment-1",
     text: "What a view!",
     date: "2026-11-09T10:15:00.000Z",
   };
@@ -122,12 +129,80 @@ describe("loadArtPiecesInfo with broken entries", () => {
       isFavorite: false,
       comments: [
         validComment,
-        { text: "Second", date: "2026-11-10T08:00:00.000Z" },
+        {
+          id: "comment-2",
+          text: "Second",
+          date: "2026-11-10T08:00:00.000Z",
+        },
       ],
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify([entry]));
 
     expect(loadArtPiecesInfo()).toEqual([entry]);
+  });
+});
+
+describe("loadArtPiecesInfo with comment ids", () => {
+  const legacyComment = {
+    text: "Saved before comments had an id",
+    date: "2026-11-09T10:15:00.000Z",
+  };
+
+  it("gives a comment without an id a new id and keeps its text and date", () => {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify([
+        { slug: "the-harvesters", isFavorite: true, comments: [legacyComment] },
+      ])
+    );
+
+    const [loaded] = loadArtPiecesInfo();
+
+    expect(loaded.isFavorite).toBe(true);
+    expect(loaded.comments).toHaveLength(1);
+    expect(loaded.comments[0]).toMatchObject(legacyComment);
+    expect(typeof loaded.comments[0].id).toBe("string");
+    expect(loaded.comments[0].id).not.toBe("");
+  });
+
+  it("gives every comment without an id its own id", () => {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify([
+        {
+          slug: "the-harvesters",
+          isFavorite: false,
+          comments: [legacyComment, legacyComment],
+        },
+      ])
+    );
+
+    const [loaded] = loadArtPiecesInfo();
+
+    expect(loaded.comments).toHaveLength(2);
+    expect(loaded.comments[0].id).not.toBe(loaded.comments[1].id);
+  });
+
+  it("keeps the id of a comment that already has one", () => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(info));
+
+    expect(loadArtPiecesInfo()[0].comments[0].id).toBe("comment-1");
+  });
+
+  it("ignores an entry with a comment whose id is not a text", () => {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify([
+        {
+          slug: "the-harvesters",
+          isFavorite: true,
+          comments: [{ ...legacyComment, id: 5 }],
+        },
+        info[1],
+      ])
+    );
+
+    expect(loadArtPiecesInfo()).toEqual([info[1]]);
   });
 });
 
