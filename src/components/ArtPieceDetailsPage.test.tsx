@@ -32,7 +32,8 @@ function renderDetails(
   onToggleFavorite: (slug: string) => void = () => {},
   getComments: (slug: string) => ArtPieceComment[] = () => [],
   onAddComment: (slug: string, text: string) => void = () => {},
-  onDeleteComment: (slug: string, id: string) => void = () => {}
+  onDeleteComment: (slug: string, id: string) => void = () => {},
+  onEditComment: (slug: string, id: string, text: string) => void = () => {}
 ) {
   render(
     <MemoryRouter initialEntries={[`/art-pieces/${slug}`]}>
@@ -47,6 +48,7 @@ function renderDetails(
               getComments={getComments}
               onAddComment={onAddComment}
               onDeleteComment={onDeleteComment}
+              onEditComment={onEditComment}
             />
           }
         />
@@ -114,6 +116,43 @@ describe("ArtPieceDetailsPage", () => {
     expect(onDeleteComment).toHaveBeenCalledWith(
       "wheat-field-with-cypresses",
       "c1"
+    );
+  });
+
+  it("reports the slug, the id and the new text when a comment is edited", async () => {
+    const user = userEvent.setup();
+    const onEditComment = vi.fn();
+    renderDetails(
+      "wheat-field-with-cypresses",
+      () => false,
+      () => {},
+      () => [
+        {
+          id: "c1",
+          text: "What a beautiful sky!",
+          date: "2026-11-09T10:15:00.000Z",
+        },
+      ],
+      () => {},
+      () => {},
+      onEditComment
+    );
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Edit comment: What a beautiful sky!",
+      })
+    );
+    const field = screen.getByRole("textbox", { name: "Edit your comment" });
+    await user.clear(field);
+    await user.type(field, "What a stormy sky!");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(onEditComment).toHaveBeenCalledTimes(1);
+    expect(onEditComment).toHaveBeenCalledWith(
+      "wheat-field-with-cypresses",
+      "c1",
+      "What a stormy sky!"
     );
   });
 

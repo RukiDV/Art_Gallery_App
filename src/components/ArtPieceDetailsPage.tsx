@@ -13,6 +13,7 @@ type ArtPieceDetailsPageProps = {
   getComments: (slug: string) => ArtPieceComment[];
   onAddComment: (slug: string, text: string) => void;
   onDeleteComment: (slug: string, id: string) => void;
+  onEditComment: (slug: string, id: string, text: string) => void;
 };
 
 export default function ArtPieceDetailsPage({
@@ -22,6 +23,7 @@ export default function ArtPieceDetailsPage({
   getComments,
   onAddComment,
   onDeleteComment,
+  onEditComment,
 }: ArtPieceDetailsPageProps) {
   const { slug } = useParams();
   const artPiece = artPieces.find((piece) => piece.slug === slug);
@@ -47,6 +49,7 @@ export default function ArtPieceDetailsPage({
       <Comments
         comments={getComments(artPiece.slug)}
         onDeleteComment={(id) => onDeleteComment(artPiece.slug, id)}
+        onEditComment={(id, text) => onEditComment(artPiece.slug, id, text)}
       />
       <CommentForm onAddComment={(text) => onAddComment(artPiece.slug, text)} />
     </article>

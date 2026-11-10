@@ -124,10 +124,15 @@ nav a.active {
   border-bottom: 1px solid #0002;
 }
 
-.comments time {
-  display: block;
+.comment-meta {
+  margin: 0;
   font-size: 0.8rem;
   color: #666;
+}
+
+.comment-edited::before {
+  content: "·";
+  margin: 0 0.4rem;
 }
 
 .comment-form {

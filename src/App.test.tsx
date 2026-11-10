@@ -65,6 +65,21 @@ async function addComment(
   await user.click(screen.getByRole("button", { name: "Add comment" }));
 }
 
+async function startEditingComment(
+  user: ReturnType<typeof userEvent.setup>,
+  commentText: string,
+  newText: string
+) {
+  await user.click(
+    screen.getByRole("button", { name: `Edit comment: ${commentText}` })
+  );
+  const field = screen.getByRole("textbox", { name: "Edit your comment" });
+  await user.clear(field);
+  if (newText !== "") {
+    await user.type(field, newText);
+  }
+}
+
 describe("App", () => {
   it("shows a loading message while the art pieces are being fetched", () => {
     vi.stubGlobal(
@@ -603,6 +618,133 @@ describe("App", () => {
     expect(
       screen.queryByText("Saved before ids existed")
     ).not.toBeInTheDocument();
+  });
+
+  it("changes only the edited comment when two comments have the same text", async () => {
+    const user = userEvent.setup();
+    vi.useFakeTimers({ toFake: ["Date"] });
+    stubFetchWithArtPieces();
+
+    renderApp("/art-pieces/the-harvesters");
+    await screen.findByRole("heading", { name: "Comments" });
+    vi.setSystemTime(new Date("2026-11-09T10:15:00.000Z"));
+    await addComment(user, "Nice!");
+    vi.setSystemTime(new Date("2026-11-09T10:16:00.000Z"));
+    await addComment(user, "Nice!");
+
+    await user.click(
+      screen.getAllByRole("button", { name: "Edit comment: Nice!" })[1]
+    );
+    const field = screen.getByRole("textbox", { name: "Edit your comment" });
+    await user.clear(field);
+    await user.type(field, "Nice, really!");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    const items = screen
+      .getAllByRole("listitem")
+      .filter((item) => item.querySelector("time") !== null);
+    expect(items).toHaveLength(2);
+    expect(items[0]).toHaveTextContent("Nice!");
+    expect(items[0]).not.toHaveTextContent("edited");
+    expect(items[1]).toHaveTextContent("Nice, really!");
+    expect(items[1]).toHaveTextContent("edited");
+  });
+
+  it("keeps the original date and time of an edited comment", async () => {
+    const user = userEvent.setup();
+    vi.useFakeTimers({ toFake: ["Date"] });
+    stubFetchWithArtPieces();
+
+    renderApp("/art-pieces/the-harvesters");
+    await screen.findByRole("heading", { name: "Comments" });
+    vi.setSystemTime(new Date("2026-11-09T10:15:00.000Z"));
+    await addComment(user, "A typo here");
+    vi.setSystemTime(new Date("2026-11-09T18:45:00.000Z"));
+
+    await startEditingComment(user, "A typo here", "No typo here");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(screen.getByText("No typo here")).toBeInTheDocument();
+    expect(screen.getByText("edited")).toBeInTheDocument();
+    expect(
+      screen.getByText(new Date("2026-11-09T10:15:00.000Z").toLocaleString())
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(new Date("2026-11-09T18:45:00.000Z").toLocaleString())
+    ).not.toBeInTheDocument();
+  });
+
+  it("keeps the old text and shows no edited label after Cancel", async () => {
+    const user = userEvent.setup();
+    stubFetchWithArtPieces();
+
+    renderApp("/art-pieces/the-harvesters");
+    await screen.findByRole("heading", { name: "Comments" });
+    await addComment(user, "Keep me");
+
+    await startEditingComment(user, "Keep me", "Changed my mind");
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
+
+    expect(screen.getByText("Keep me")).toBeInTheDocument();
+    expect(screen.queryByText("Changed my mind")).not.toBeInTheDocument();
+    expect(screen.queryByText("edited")).not.toBeInTheDocument();
+  });
+
+  it("does not save an empty text for an edited comment", async () => {
+    const user = userEvent.setup();
+    stubFetchWithArtPieces();
+
+    renderApp("/art-pieces/the-harvesters");
+    await screen.findByRole("heading", { name: "Comments" });
+    await addComment(user, "Not empty");
+
+    await startEditingComment(user, "Not empty", "");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(
+      screen.getByRole("textbox", { name: "Edit your comment" })
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
+
+    expect(screen.getByText("Not empty")).toBeInTheDocument();
+    expect(screen.queryByText("edited")).not.toBeInTheDocument();
+  });
+
+  it("does not mark a comment as edited when Save does not change the text", async () => {
+    const user = userEvent.setup();
+    stubFetchWithArtPieces();
+
+    renderApp("/art-pieces/the-harvesters");
+    await screen.findByRole("heading", { name: "Comments" });
+    await addComment(user, "Same text");
+
+    await startEditingComment(user, "Same text", "  Same text  ");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(screen.getByText("Same text")).toBeInTheDocument();
+    expect(screen.queryByText("edited")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("textbox", { name: "Edit your comment" })
+    ).not.toBeInTheDocument();
+  });
+
+  it("keeps an edited comment and its label after the app is reloaded", async () => {
+    const user = userEvent.setup();
+    stubFetchWithArtPieces();
+
+    const firstVisit = renderApp("/art-pieces/the-harvesters");
+    await screen.findByRole("heading", { name: "Comments" });
+    await addComment(user, "Before the edit");
+    await startEditingComment(user, "Before the edit", "After the edit");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    firstVisit.unmount();
+
+    renderApp("/art-pieces/the-harvesters");
+
+    expect(await screen.findByText("After the edit")).toBeInTheDocument();
+    expect(screen.queryByText("Before the edit")).not.toBeInTheDocument();
+    expect(screen.getByText("edited")).toBeInTheDocument();
   });
 
   it("keeps comments with the art piece they were written for", async () => {
