@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 
 import type { ArtPiece } from "../types";
@@ -113,5 +113,48 @@ describe("ArtPiecePreview: back of the card", () => {
       "aria-hidden",
       "true"
     );
+  });
+});
+
+describe("ArtPiecePreview: shape of the picture", () => {
+  function figure() {
+    return screen.getByRole("figure");
+  }
+
+  function loadImage(naturalWidth: number, naturalHeight: number) {
+    const image = screen.getByRole("img", { name: "The Harvesters" });
+    Object.defineProperty(image, "naturalWidth", { value: naturalWidth });
+    Object.defineProperty(image, "naturalHeight", { value: naturalHeight });
+    fireEvent.load(image);
+  }
+
+  it("has no picture shape until the picture is loaded", () => {
+    renderPreview();
+
+    expect(figure().style.getPropertyValue("--ratio")).toBe("");
+  });
+
+  it("takes the width-to-height ratio of the loaded picture", () => {
+    renderPreview();
+
+    loadImage(1600, 800);
+
+    expect(figure().style.getPropertyValue("--ratio")).toBe("2");
+  });
+
+  it("rounds the ratio", () => {
+    renderPreview();
+
+    loadImage(1000, 3000);
+
+    expect(figure().style.getPropertyValue("--ratio")).toBe("0.333");
+  });
+
+  it("ignores a picture without a size", () => {
+    renderPreview();
+
+    loadImage(0, 0);
+
+    expect(figure().style.getPropertyValue("--ratio")).toBe("");
   });
 });

@@ -1,4 +1,4 @@
-import { ViewTransition } from "react";
+import { type CSSProperties, useState, ViewTransition } from "react";
 
 import type { ArtPiece } from "../types";
 import FavoriteButton from "./FavoriteButton";
@@ -15,8 +15,14 @@ export default function ArtPiecePreview({
   isFavorite,
   onToggleFavorite,
 }: ArtPiecePreviewProps) {
+  // The favorites wall sizes each frame to the shape of its picture.
+  const [ratio, setRatio] = useState<number>();
+
   return (
-    <figure className="art-piece art-card">
+    <figure
+      className="art-piece art-card"
+      style={ratio ? ({ "--ratio": ratio } as CSSProperties) : undefined}
+    >
       <TransitionLink to={`/art-pieces/${artPiece.slug}`}>
         <div className="card-inner">
           <div className="card-front">
@@ -26,7 +32,18 @@ export default function ArtPiecePreview({
               default="none"
               share={{ [OPEN_DETAILS_TRANSITION]: "auto", default: "none" }}
             >
-              <img src={artPiece.imageSource} alt={artPiece.name} />
+              <img
+                src={artPiece.imageSource}
+                alt={artPiece.name}
+                onLoad={(event) => {
+                  const { naturalWidth, naturalHeight } = event.currentTarget;
+                  if (naturalWidth > 0 && naturalHeight > 0) {
+                    setRatio(
+                      Math.round((naturalWidth / naturalHeight) * 1000) / 1000
+                    );
+                  }
+                }}
+              />
             </ViewTransition>
             {/* Shown on touch screens only, where the card cannot flip. */}
             <span className="card-chip" aria-hidden="true">
