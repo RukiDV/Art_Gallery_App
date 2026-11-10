@@ -17,6 +17,7 @@
   --wall-mat: #f4efe6;
   --wall-ink: #222;
   --wall-muted: #5c574f;
+  --wall-frame: #1b1815;
   --frame-mat: #f4efe6;
   --frame-canvas: #e4ded2;
   --card-edge: transparent;
@@ -63,10 +64,11 @@
   --circle-border: #fff4;
   --control-border: #7a7a88;
   --mat: #0d0d11;
-  --wall: #24211e;
-  --wall-mat: #2b2723;
-  --wall-ink: #ece6da;
-  --wall-muted: #b3ab9d;
+  --wall: #1c1c22;
+  --wall-mat: #131318;
+  --wall-ink: #ececec;
+  --wall-muted: #a8a8b3;
+  --wall-frame: #3a3a44;
   --frame-mat: #d3ccbd;
   --frame-canvas: #b9b2a2;
   --card-edge: #ffffff1f;
@@ -960,7 +962,7 @@ label {
 /* Dark frame and a cream mat, with a small label under the picture. */
 .favorites-wall .card-front,
 .favorites-wall .card-back {
-  border: 0.4rem solid #1b1815;
+  border: 0.4rem solid var(--wall-frame);
   border-radius: 2px;
   box-shadow:
     0 0 0 1px #ffffff1f,
@@ -994,7 +996,7 @@ label {
 /* The nail ... */
 .favorites-wall .art-list li::before {
   position: absolute;
-  top: -1.4rem;
+  top: -1.7rem;
   left: 50%;
   z-index: 1;
   width: 0.7rem;
@@ -1009,10 +1011,10 @@ label {
 /* ... and the string down to the two corners of the frame. */
 .favorites-wall .art-list li::after {
   position: absolute;
-  top: -1.1rem;
+  top: -1.35rem;
   right: 14%;
   left: 14%;
-  height: 1.3rem;
+  height: 1.2rem;
   pointer-events: none;
   content: "";
   background:
