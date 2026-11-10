@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { type CSSProperties, useEffect, useState } from "react";
 
 import { getRandomArtPiece } from "../randomArtPiece";
 import type { ArtPiece } from "../types";
@@ -35,7 +35,16 @@ export default function SpotlightPage({
 
   return (
     <>
-      <figure className="art-piece spotlight" aria-live="polite">
+      <figure
+        className="art-piece spotlight"
+        aria-live="polite"
+        // The blurred copy of the picture behind it (see styles.css).
+        style={
+          {
+            "--art-image": `url(${JSON.stringify(artPiece.imageSource)})`,
+          } as CSSProperties
+        }
+      >
         <img
           key={artPiece.slug}
           src={artPiece.imageSource}
