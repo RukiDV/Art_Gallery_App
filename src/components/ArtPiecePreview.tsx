@@ -15,13 +15,36 @@ export default function ArtPiecePreview({
   onToggleFavorite,
 }: ArtPiecePreviewProps) {
   return (
-    <figure className="art-piece">
+    <figure className="art-piece art-card">
       <Link to={`/art-pieces/${artPiece.slug}`}>
-        <img src={artPiece.imageSource} alt={artPiece.name} />
-        <figcaption>
-          <h2>{artPiece.name}</h2>
-          <p>{artPiece.artist}</p>
-        </figcaption>
+        <div className="card-inner">
+          <div className="card-front">
+            <img src={artPiece.imageSource} alt={artPiece.name} />
+            {/* Shown on touch screens only, where the card cannot flip. */}
+            <span className="card-chip" aria-hidden="true">
+              →
+            </span>
+            <figcaption>
+              <h2>{artPiece.name}</h2>
+              <p>{artPiece.artist}</p>
+            </figcaption>
+          </div>
+          {/* The back turns up on hover or keyboard focus; the link already says all that matters. */}
+          <div className="card-back" aria-hidden="true">
+            <span className="card-year">{artPiece.year}</span>
+            <span className="card-genre">{artPiece.genre}</span>
+            <span className="card-palette">
+              {artPiece.colors.map((color) => (
+                <span
+                  key={color}
+                  className="card-swatch"
+                  style={{ backgroundColor: color }}
+                />
+              ))}
+            </span>
+            <span className="card-cta">View details →</span>
+          </div>
+        </div>
       </Link>
       <FavoriteButton
         artPieceName={artPiece.name}

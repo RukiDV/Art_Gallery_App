@@ -67,3 +67,51 @@ describe("ArtPiecePreview", () => {
     );
   });
 });
+
+describe("ArtPiecePreview: back of the card", () => {
+  function back() {
+    return document.querySelector(".card-back");
+  }
+
+  it("shows the year, the genre and a hint to open the details", () => {
+    renderPreview();
+
+    expect(back()).toHaveTextContent("1565");
+    expect(back()).toHaveTextContent("Renaissance");
+    expect(back()).toHaveTextContent("View details");
+  });
+
+  it("shows one dot per color of the art piece", () => {
+    renderPreview();
+
+    const dots = Array.from(
+      document.querySelectorAll<HTMLElement>(".card-back .card-swatch")
+    ).map((dot) => dot.style.backgroundColor);
+
+    expect(dots).toEqual(["rgb(55, 65, 46)", "rgb(141, 115, 50)"]);
+  });
+
+  it("is hidden from screen readers and stays inside the details link", () => {
+    renderPreview();
+
+    expect(back()).toHaveAttribute("aria-hidden", "true");
+    expect(screen.getByRole("link")).toContainElement(back() as HTMLElement);
+    expect(screen.getByRole("link")).not.toHaveAccessibleName(/View details/);
+  });
+
+  it("does not repeat the title or the artist", () => {
+    renderPreview();
+
+    expect(back()).not.toHaveTextContent("The Harvesters");
+    expect(back()).not.toHaveTextContent("Pieter Bruegel the Elder");
+  });
+
+  it("has a decorative arrow chip for touch screens", () => {
+    renderPreview();
+
+    expect(document.querySelector(".card-chip")).toHaveAttribute(
+      "aria-hidden",
+      "true"
+    );
+  });
+});
