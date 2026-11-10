@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import type { ArtPieceComment } from "../types";
@@ -479,5 +479,138 @@ describe("Comments editing", () => {
     expect(
       screen.getByText(new Date(comments[0].date).toLocaleString())
     ).toHaveAttribute("datetime", comments[0].date);
+  });
+});
+
+describe("Comments history", () => {
+  const editedWithHistory: ArtPieceComment = {
+    id: "h1",
+    text: "The current text",
+    date: "2026-11-09T10:15:00.000Z",
+    edited: true,
+    history: [
+      { text: "The first text", replacedAt: "2026-11-10T09:00:00.000Z" },
+      { text: "The second text", replacedAt: "2026-11-10T10:00:00.000Z" },
+    ],
+  };
+
+  function renderComments(shownComments: ArtPieceComment[]) {
+    render(
+      <Comments
+        comments={shownComments}
+        onDeleteComment={() => {}}
+        onEditComment={() => {}}
+      />
+    );
+  }
+
+  it('turns the label "edited" into a closed toggle button', () => {
+    renderComments([editedWithHistory]);
+
+    const toggle = screen.getByRole("button", { name: "edited" });
+
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(
+      screen.queryByRole("list", { name: "Earlier versions" })
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows the earlier versions below the comment when the button is clicked", async () => {
+    const user = userEvent.setup();
+    renderComments([editedWithHistory]);
+
+    await user.click(screen.getByRole("button", { name: "edited" }));
+
+    const list = screen.getByRole("list", { name: "Earlier versions" });
+    const items = within(list).getAllByRole("listitem");
+    expect(items).toHaveLength(2);
+    expect(items[0]).toHaveTextContent("The first text");
+    expect(items[1]).toHaveTextContent("The second text");
+    expect(screen.getByRole("button", { name: "edited" })).toHaveAttribute(
+      "aria-expanded",
+      "true"
+    );
+  });
+
+  it("hides the earlier versions when the button is clicked again", async () => {
+    const user = userEvent.setup();
+    renderComments([editedWithHistory]);
+    const toggle = screen.getByRole("button", { name: "edited" });
+
+    await user.click(toggle);
+    await user.click(toggle);
+
+    expect(
+      screen.queryByRole("list", { name: "Earlier versions" })
+    ).not.toBeInTheDocument();
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("does not list the current text among the earlier versions", async () => {
+    const user = userEvent.setup();
+    renderComments([editedWithHistory]);
+
+    await user.click(screen.getByRole("button", { name: "edited" }));
+
+    expect(screen.getAllByText("The current text")).toHaveLength(1);
+    expect(
+      within(
+        screen.getByRole("list", { name: "Earlier versions" })
+      ).queryByText("The current text")
+    ).not.toBeInTheDocument();
+  });
+
+  it("has no button on a comment that was never edited", () => {
+    renderComments([comments[0]]);
+
+    expect(
+      screen.queryByRole("button", { name: "edited" })
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText("edited")).not.toBeInTheDocument();
+  });
+
+  it('says "No earlier versions saved" for a comment that was edited before the history existed', async () => {
+    const user = userEvent.setup();
+    renderComments([{ ...comments[0], edited: true }]);
+
+    await user.click(screen.getByRole("button", { name: "edited" }));
+
+    expect(screen.getByText("No earlier versions saved")).toBeInTheDocument();
+  });
+
+  it("opens the history of one comment only", async () => {
+    const user = userEvent.setup();
+    renderComments([
+      editedWithHistory,
+      {
+        id: "h2",
+        text: "Another comment",
+        date: "2026-11-09T11:00:00.000Z",
+        edited: true,
+        history: [
+          { text: "Its old text", replacedAt: "2026-11-10T11:00:00.000Z" },
+        ],
+      },
+    ]);
+
+    await user.click(screen.getAllByRole("button", { name: "edited" })[1]);
+
+    expect(screen.getByText("Its old text")).toBeInTheDocument();
+    expect(screen.queryByText("The first text")).not.toBeInTheDocument();
+  });
+
+  it("can be used with the keyboard and keeps the focus on the button", async () => {
+    const user = userEvent.setup();
+    renderComments([editedWithHistory]);
+
+    await user.tab();
+    const toggle = screen.getByRole("button", { name: "edited" });
+    expect(toggle).toHaveFocus();
+
+    await user.keyboard("{Enter}");
+
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(toggle).toHaveFocus();
+    expect(screen.getByText("The first text")).toBeInTheDocument();
   });
 });
