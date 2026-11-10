@@ -27,6 +27,8 @@ export default function App() {
     saveArtPiecesInfo(artPiecesInfo);
   }, [artPiecesInfo]);
 
+  const favoritesCount = artPiecesInfo.filter((info) => info.isFavorite).length;
+
   function isFavorite(slug: string): boolean {
     return artPiecesInfo.some((info) => info.slug === slug && info.isFavorite);
   }
@@ -157,7 +159,7 @@ export default function App() {
           <Route path="*" element={<p>Page not found</p>} />
         </Routes>
       </main>
-      <Navigation />
+      <Navigation favoritesCount={favoritesCount} />
     </>
   );
 }
