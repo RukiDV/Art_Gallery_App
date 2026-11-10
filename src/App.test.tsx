@@ -1686,3 +1686,67 @@ describe("App", () => {
     ).not.toBeInTheDocument();
   });
 });
+
+describe("App: Show another", () => {
+  it("shows a Show another button on / that changes the spotlight piece", async () => {
+    const user = userEvent.setup();
+    mockRandomFraction(0);
+    stubFetchWithArtPieces();
+
+    renderApp("/");
+    expect(
+      await screen.findByRole("img", { name: "The Harvesters" })
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Show another" }));
+
+    expect(
+      screen.getByRole("img", { name: "Wheat Field with Cypresses" })
+    ).toBeInTheDocument();
+    expect(screen.getByText("Vincent van Gogh")).toBeInTheDocument();
+    expect(screen.queryByRole("img", { name: "The Harvesters" })).toBeNull();
+  });
+
+  it("keeps the piece and counts the favorite when it is marked after Show another", async () => {
+    const user = userEvent.setup();
+    const setRandomFraction = mockRandomFraction(0);
+    stubFetchWithArtPieces();
+
+    renderApp("/");
+    await user.click(
+      await screen.findByRole("button", { name: "Show another" })
+    );
+    setRandomFraction(0);
+    await user.click(
+      screen.getByRole("button", {
+        name: "Favorite Wheat Field with Cypresses",
+      })
+    );
+
+    expect(
+      screen.getByRole("button", {
+        name: "Favorite Wheat Field with Cypresses",
+      })
+    ).toHaveAttribute("aria-pressed", "true");
+    expect(screen.queryByRole("img", { name: "The Harvesters" })).toBeNull();
+    expect(
+      screen.getByRole("link", { name: "Favorites (1)" })
+    ).toBeInTheDocument();
+  });
+
+  it.each(["/art-pieces", "/favorites"])(
+    "has no Show another button on %s",
+    async (route) => {
+      stubFetchWithArtPieces();
+
+      renderApp(route);
+      await screen.findByRole("link", { name: "Spotlight" });
+      await waitFor(() =>
+        expect(screen.queryByText(/loading/i)).not.toBeInTheDocument()
+      );
+
+      expect(
+        screen.queryByRole("button", { name: "Show another" })
+      ).not.toBeInTheDocument();
+    }
+  );
+});

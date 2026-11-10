@@ -15,19 +15,31 @@ export default function SpotlightPage({
   isFavorite,
   onToggleFavorite,
 }: SpotlightPageProps) {
-  const [artPiece] = useState(() => getRandomArtPiece(artPieces));
+  const [artPiece, setArtPiece] = useState(() => getRandomArtPiece(artPieces));
 
   return (
-    <figure className="art-piece spotlight">
-      <img src={artPiece.imageSource} alt={artPiece.name} />
-      <figcaption>
-        <p>{artPiece.artist}</p>
-      </figcaption>
-      <FavoriteButton
-        artPieceName={artPiece.name}
-        isFavorite={isFavorite(artPiece.slug)}
-        onToggle={() => onToggleFavorite(artPiece.slug)}
-      />
-    </figure>
+    <>
+      <figure className="art-piece spotlight">
+        <img src={artPiece.imageSource} alt={artPiece.name} />
+        <figcaption>
+          <p>{artPiece.artist}</p>
+        </figcaption>
+        <FavoriteButton
+          artPieceName={artPiece.name}
+          isFavorite={isFavorite(artPiece.slug)}
+          onToggle={() => onToggleFavorite(artPiece.slug)}
+        />
+      </figure>
+      {artPieces.length > 1 && (
+        <button
+          type="button"
+          onClick={() =>
+            setArtPiece(getRandomArtPiece(artPieces, artPiece.slug))
+          }
+        >
+          Show another
+        </button>
+      )}
+    </>
   );
 }
