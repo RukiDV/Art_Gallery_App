@@ -419,3 +419,130 @@ describe("SpotlightPage: slideshow timer", () => {
     expect(vi.getTimerCount()).toBe(0);
   });
 });
+
+describe("SpotlightPage: icon buttons", () => {
+  it("shows only an icon in the Show another button, hidden from screen readers", () => {
+    render(spotlight());
+
+    const button = screen.getByRole("button", { name: "Show another" });
+
+    expect(button.textContent).toBe("");
+    expect(button.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
+  });
+
+  it("shows only an icon in the slideshow button, before and after it is clicked", async () => {
+    const user = userEvent.setup();
+    render(spotlight());
+
+    const start = screen.getByRole("button", { name: "Start slideshow" });
+    expect(start.textContent).toBe("");
+    expect(start.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
+
+    await user.click(start);
+
+    const stop = screen.getByRole("button", { name: "Stop slideshow" });
+    expect(stop.textContent).toBe("");
+    expect(stop.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
+  });
+
+  it("shows a different icon for Start and Stop", async () => {
+    const user = userEvent.setup();
+    render(spotlight());
+
+    const startIcon = screen
+      .getByRole("button", { name: "Start slideshow" })
+      .querySelector("svg")?.innerHTML;
+    await user.click(screen.getByRole("button", { name: "Start slideshow" }));
+    const stopIcon = screen
+      .getByRole("button", { name: "Stop slideshow" })
+      .querySelector("svg")?.innerHTML;
+
+    expect(startIcon).toBeTruthy();
+    expect(stopIcon).toBeTruthy();
+    expect(stopIcon).not.toBe(startIcon);
+  });
+});
+
+describe("SpotlightPage: palette dots", () => {
+  function swatchColors(container: HTMLElement) {
+    return Array.from(
+      container.querySelectorAll<HTMLElement>(".spotlight-swatch")
+    ).map((swatch) => swatch.style.backgroundColor);
+  }
+
+  it("shows one dot per color of the shown piece, and no extra text", () => {
+    mockRandomFraction(0);
+    const { container } = render(spotlight());
+
+    expect(swatchColors(container)).toEqual([
+      "rgb(55, 65, 46)",
+      "rgb(141, 115, 50)",
+    ]);
+    expect(screen.getByRole("figure")).toHaveTextContent(
+      "Pieter Bruegel the Elder"
+    );
+    expect(screen.getByRole("figure").textContent).toBe(
+      "Pieter Bruegel the Elder"
+    );
+  });
+
+  it("changes the dots when another piece is shown", async () => {
+    mockRandomFraction(0);
+    const user = userEvent.setup();
+    const { container } = render(spotlight());
+
+    await user.click(screen.getByRole("button", { name: "Show another" }));
+
+    expect(swatchColors(container)).toEqual([
+      "rgb(113, 143, 152)",
+      "rgb(157, 165, 158)",
+    ]);
+  });
+});
+
+describe("SpotlightPage: slideshow progress line", () => {
+  function progressLine(container: HTMLElement) {
+    return container.querySelector(".spotlight-progress");
+  }
+
+  it("is not shown while the slideshow is stopped", () => {
+    const { container } = render(spotlight());
+
+    expect(progressLine(container)).not.toBeInTheDocument();
+  });
+
+  it("is shown, hidden from screen readers and lasting 5 seconds, while the slideshow runs", async () => {
+    const user = userEvent.setup();
+    const { container } = render(spotlight());
+
+    await user.click(screen.getByRole("button", { name: "Start slideshow" }));
+
+    expect(progressLine(container)).toHaveAttribute("aria-hidden", "true");
+    expect(progressLine(container)).toHaveStyle({
+      animationDuration: "5000ms",
+    });
+  });
+
+  it("is removed again when the slideshow is stopped", async () => {
+    const user = userEvent.setup();
+    const { container } = render(spotlight());
+
+    await user.click(screen.getByRole("button", { name: "Start slideshow" }));
+    await user.click(screen.getByRole("button", { name: "Stop slideshow" }));
+
+    expect(progressLine(container)).not.toBeInTheDocument();
+  });
+
+  it("starts over as a new element when another piece is shown", async () => {
+    mockRandomFraction(0);
+    const user = userEvent.setup();
+    const { container } = render(spotlight());
+    await user.click(screen.getByRole("button", { name: "Start slideshow" }));
+    const before = progressLine(container);
+
+    await user.click(screen.getByRole("button", { name: "Show another" }));
+
+    expect(progressLine(container)).toBeInTheDocument();
+    expect(progressLine(container)).not.toBe(before);
+  });
+});

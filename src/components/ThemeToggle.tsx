@@ -1,6 +1,11 @@
-import { useEffect, useState } from "react";
+import { type MouseEvent, useEffect, useState } from "react";
+import { flushSync } from "react-dom";
 
 import { loadTheme, saveTheme, type Theme } from "../theme";
+
+const REVEAL_DURATION_MS = 700;
+
+function noop() {}
 
 function MoonIcon() {
   return (
@@ -46,10 +51,78 @@ export default function ThemeToggle() {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
 
-  function toggleTheme() {
-    const nextTheme = theme === "dark" ? "light" : "dark";
+  function applyTheme(nextTheme: Theme) {
     setTheme(nextTheme);
     saveTheme(nextTheme);
+  }
+
+  function toggleTheme(event: MouseEvent<HTMLButtonElement>) {
+    const nextTheme = theme === "dark" ? "light" : "dark";
+    const root = document.documentElement;
+    const prefersLessMotion = window.matchMedia?.(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
+
+    // Two view transitions at once (a quick second click, or a picture still
+    // gliding to another page) are asked too much of the browser.
+    const isTransitionRunning =
+      root.classList.contains("theme-reveal") ||
+      (document.getAnimations?.() ?? []).some((animation) =>
+        (animation.effect as KeyframeEffect | null)?.pseudoElement?.startsWith(
+          "::view-transition"
+        )
+      );
+
+    // Without view transitions, for people who prefer less motion, or while
+    // another transition runs, the mode simply switches.
+    if (
+      !document.startViewTransition ||
+      prefersLessMotion ||
+      isTransitionRunning
+    ) {
+      applyTheme(nextTheme);
+      return;
+    }
+
+    // The new mode grows as a circle from the click (or from the button, when
+    // the click came from the keyboard).
+    const { clientX, clientY } = event;
+    const box = event.currentTarget.getBoundingClientRect();
+    const hasMousePosition = clientX !== 0 || clientY !== 0;
+    const x = hasMousePosition ? clientX : box.left + box.width / 2;
+    const y = hasMousePosition ? clientY : box.top + box.height / 2;
+    // The circle must reach the farthest corner of the window.
+    const radius = Math.hypot(
+      Math.max(x, window.innerWidth - x),
+      Math.max(y, window.innerHeight - y)
+    );
+
+    root.classList.add("theme-reveal");
+
+    const transition = document.startViewTransition(() => {
+      // The page must show the new mode before the browser takes the snapshot.
+      root.dataset.theme = nextTheme;
+      flushSync(() => applyTheme(nextTheme));
+    });
+
+    transition.ready.then(() => {
+      root.animate?.(
+        {
+          clipPath: [
+            `circle(0px at ${x}px ${y}px)`,
+            `circle(${radius}px at ${x}px ${y}px)`,
+          ],
+        },
+        {
+          duration: REVEAL_DURATION_MS,
+          easing: "ease-in-out",
+          pseudoElement: "::view-transition-new(root)",
+        }
+      );
+    }, noop);
+
+    const cleanUp = () => root.classList.remove("theme-reveal");
+    transition.finished.then(cleanUp, cleanUp);
   }
 
   // The icon shows what a click switches to; the label says it in words.

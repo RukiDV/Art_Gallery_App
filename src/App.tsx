@@ -1,8 +1,9 @@
 import { type ReactNode, useEffect, useState } from "react";
-import { Route, Routes } from "react-router";
+import { Link, Route, Routes } from "react-router";
 import useSWR from "swr";
 
 import ArtPieceDetailsPage from "./components/ArtPieceDetailsPage";
+import EmptyFrame from "./components/EmptyFrame";
 import FavoritesPage from "./components/FavoritesPage";
 import GalleryPage from "./components/GalleryPage";
 import Navigation from "./components/Navigation";
@@ -55,7 +56,20 @@ export default function App() {
   }
 
   function toggleFavorite(slug: string) {
-    updateInfo(slug, (info) => ({ ...info, isFavorite: !info.isFavorite }));
+    setArtPiecesInfo((current) => {
+      const info = current.find((entry) => entry.slug === slug) ?? {
+        slug,
+        isFavorite: false,
+        comments: [],
+      };
+      const toggled = { ...info, isFavorite: !info.isFavorite };
+
+      // A new favorite goes to the end, so the favorites keep the order in
+      // which they were added.
+      return toggled.isFavorite
+        ? [...current.filter((entry) => entry.slug !== slug), toggled]
+        : current.map((entry) => (entry.slug === slug ? toggled : entry));
+    });
   }
 
   function addComment(slug: string, text: string) {
@@ -106,17 +120,23 @@ export default function App() {
 
     if (error && !isLoadingWithoutData) {
       return (
-        <>
+        <div className="status-message">
+          <EmptyFrame symbol="!" />
           <p>Failed to load the art pieces. Please try again later.</p>
           <button type="button" onClick={() => mutate()}>
             Try again
           </button>
-        </>
+        </div>
       );
     }
 
     if (!artPieces) {
-      return <p>Loading art pieces…</p>;
+      return (
+        <div className="status-message">
+          <EmptyFrame isLoading />
+          <p>Loading art pieces…</p>
+        </div>
+      );
     }
 
     return render(artPieces);
@@ -124,8 +144,10 @@ export default function App() {
 
   return (
     <>
-      <main>
+      <header className="site-header">
         <h1>Art Gallery</h1>
+      </header>
+      <main>
         <Routes>
           <Route
             path="/"
@@ -168,10 +190,27 @@ export default function App() {
                 artPieces={loaded}
                 isFavorite={isFavorite}
                 onToggleFavorite={toggleFavorite}
+                favoriteOrder={artPiecesInfo.map((info) => info.slug)}
               />
             ))}
           />
-          <Route path="*" element={<p>Page not found</p>} />
+          <Route
+            path="*"
+            element={
+              <div className="status-message">
+                <EmptyFrame symbol="404" />
+                <p>Page not found</p>
+                <div className="status-actions">
+                  <Link to="/" className="button-link button-primary">
+                    Back to the Spotlight
+                  </Link>
+                  <Link to="/art-pieces" className="button-link">
+                    Browse the gallery
+                  </Link>
+                </div>
+              </div>
+            }
+          />
         </Routes>
       </main>
       <Navigation favoritesCount={favoritesCount} />

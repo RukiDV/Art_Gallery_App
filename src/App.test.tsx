@@ -1870,3 +1870,160 @@ describe("App: dark mode", () => {
     expect(localStorage.getItem(STORAGE_KEY)).toBe(before);
   });
 });
+
+describe("App: header", () => {
+  it("has a banner with the heading Art Gallery on every page", async () => {
+    stubFetchWithArtPieces();
+
+    renderApp("/art-pieces");
+
+    expect(
+      within(screen.getByRole("banner")).getByRole("heading", {
+        level: 1,
+        name: "Art Gallery",
+      })
+    ).toBeInTheDocument();
+    await screen.findByRole("link", { name: "Spotlight" });
+  });
+});
+
+describe("App: status pages with an empty frame", () => {
+  function frameOf(container: HTMLElement) {
+    return container.querySelector(".empty-frame");
+  }
+
+  it("shows a decorative empty frame and ways back on an unknown URL", async () => {
+    stubFetchWithArtPieces();
+
+    const { container } = renderApp("/does-not-exist");
+
+    expect(await screen.findByText("Page not found")).toBeInTheDocument();
+    expect(frameOf(container)).toHaveAttribute("aria-hidden", "true");
+    expect(frameOf(container)).toHaveTextContent("404");
+    expect(
+      screen.getByRole("link", { name: "Back to the Spotlight" })
+    ).toHaveAttribute("href", "/");
+    expect(
+      screen.getByRole("link", { name: "Browse the gallery" })
+    ).toHaveAttribute("href", "/art-pieces");
+  });
+
+  it("goes to the Spotlight with the link on an unknown URL", async () => {
+    stubFetchWithArtPieces();
+    const user = userEvent.setup();
+    renderApp("/does-not-exist");
+
+    await user.click(
+      await screen.findByRole("link", { name: "Back to the Spotlight" })
+    );
+
+    expect(await screen.findByRole("figure")).toBeInTheDocument();
+    expect(screen.queryByText("Page not found")).not.toBeInTheDocument();
+  });
+
+  it("shows a decorative empty frame and a way back for an unknown art piece", async () => {
+    stubFetchWithArtPieces();
+
+    const { container } = renderApp("/art-pieces/does-not-exist");
+
+    expect(await screen.findByText("Art piece not found")).toBeInTheDocument();
+    expect(frameOf(container)).toHaveAttribute("aria-hidden", "true");
+    expect(
+      screen.getByRole("link", { name: "Back to the gallery" })
+    ).toHaveAttribute("href", "/art-pieces");
+  });
+
+  it("shows a decorative empty frame while loading", () => {
+    stubFetchWithOutcomes("never finishes");
+
+    const { container } = renderApp("/");
+
+    expect(screen.getByText(/loading/i)).toBeInTheDocument();
+    expect(frameOf(container)).toHaveAttribute("aria-hidden", "true");
+  });
+
+  it("shows a decorative empty frame with the error message and Try again", async () => {
+    stubFetchWithOutcomes("fails");
+
+    const { container } = renderApp("/");
+
+    expect(await screen.findByText(/failed/i)).toBeInTheDocument();
+    expect(frameOf(container)).toHaveAttribute("aria-hidden", "true");
+    expect(
+      screen.getByRole("button", { name: "Try again" })
+    ).toBeInTheDocument();
+  });
+});
+
+describe("App: order of the favorites", () => {
+  function favoriteNames() {
+    return screen
+      .getAllByRole("heading", { level: 2 })
+      .map((heading) => heading.textContent);
+  }
+
+  async function addFavorite(
+    user: ReturnType<typeof userEvent.setup>,
+    name: string
+  ) {
+    await user.click(
+      await screen.findByRole("button", { name: `Favorite ${name}` })
+    );
+  }
+
+  async function openFavorites(user: ReturnType<typeof userEvent.setup>) {
+    await user.click(screen.getByRole("link", { name: /^Favorites/ }));
+    await screen.findAllByRole("heading", { level: 2 });
+  }
+
+  it("lists a new favorite at the end, even when it comes first in the gallery", async () => {
+    stubFetchWithArtPieces();
+    const user = userEvent.setup();
+    renderApp("/art-pieces");
+
+    await addFavorite(user, "Wheat Field with Cypresses");
+    await addFavorite(user, "The Harvesters");
+    await openFavorites(user);
+
+    expect(favoriteNames()).toEqual([
+      "Wheat Field with Cypresses",
+      "The Harvesters",
+    ]);
+  });
+
+  it("moves a piece to the end when it is removed and added again", async () => {
+    stubFetchWithArtPieces();
+    const user = userEvent.setup();
+    renderApp("/art-pieces");
+
+    await addFavorite(user, "Wheat Field with Cypresses");
+    await addFavorite(user, "The Harvesters");
+    await addFavorite(user, "Wheat Field with Cypresses");
+    await addFavorite(user, "Wheat Field with Cypresses");
+    await openFavorites(user);
+
+    expect(favoriteNames()).toEqual([
+      "The Harvesters",
+      "Wheat Field with Cypresses",
+    ]);
+  });
+
+  it("keeps the order after a reload", async () => {
+    stubFetchWithArtPieces();
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify([
+        { slug: "wheat-field-with-cypresses", isFavorite: true, comments: [] },
+        { slug: "the-harvesters", isFavorite: true, comments: [] },
+      ])
+    );
+
+    renderApp("/favorites");
+
+    await screen.findAllByRole("heading", { level: 2 });
+    expect(favoriteNames()).toEqual([
+      "Wheat Field with Cypresses",
+      "The Harvesters",
+    ]);
+  });
+});

@@ -86,7 +86,7 @@ export default function GalleryPage({
         </div>
       )}
       {shownArtPieces.length === 0 ? (
-        <p>No art pieces found</p>
+        <p className="status-message">No art pieces found</p>
       ) : (
         <ArtPieceList
           artPieces={shownArtPieces}

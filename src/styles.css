@@ -1,36 +1,92 @@
-/* One set of colors per mode; ThemeToggle sets data-theme on <html>. */
+/* One set of tokens per mode; ThemeToggle sets data-theme on <html>. */
 :root {
   color-scheme: light;
+
+  /* Colors */
   --page-background: #f6f4ef;
+  --surface: #fffdf9;
+  --surface-raised: #fff;
   --text: #222;
   --muted-text: #666;
   --hover-text: #222;
   --border: #0002;
   --circle-border: #0003;
+  --control-border: #8a857c;
+  --mat: #ece8df;
+  --wall: #e6dfd0;
+  --wall-mat: #f4efe6;
+  --wall-ink: #222;
+  --wall-muted: #5c574f;
+  --wall-frame: #1b1815;
+  --frame-mat: #f4efe6;
+  --frame-canvas: #e4ded2;
+  --card-edge: transparent;
   --selected-outline: #222;
+  --accent: #8c2f39;
+  --accent-hover: #6f232c;
+  --accent-contrast: #fff;
+  --accent-soft: #f1e1e2;
+  --danger: #b3261e;
+  --focus-ring: #8c2f39;
   --nav-background: #222;
   --nav-link: #ccc;
   --nav-link-active: white;
+  --nav-hover: #ffffff1f;
   --favorite-background: white;
   --favorite-icon: #444;
   --favorite-pressed: #d6336c;
+  --shadow: 0 1px 2px #0002, 0 10px 30px -12px #00000055;
+
+  /* Shape, spacing, type, motion (the same in both modes) */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1.25rem;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2.5rem;
+  --font-heading: "Fraunces", Georgia, "Times New Roman", serif;
+  --duration: 0.2s;
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --page-background: #16161a;
+  --page-background: #131318;
+  --surface: #23232b;
+  --surface-raised: #2c2c36;
   --text: #ececec;
   --muted-text: #a8a8b3;
   --hover-text: white;
   --border: #fff3;
   --circle-border: #fff4;
+  --control-border: #7a7a88;
+  --mat: #0d0d11;
+  --wall: #1c1c22;
+  --wall-mat: #131318;
+  --wall-ink: #ececec;
+  --wall-muted: #a8a8b3;
+  --wall-frame: #3a3a44;
+  --frame-mat: #d3ccbd;
+  --frame-canvas: #b9b2a2;
+  --card-edge: #ffffff1f;
   --selected-outline: #ececec;
-  --nav-background: #0d0d10;
+  --accent: #e8a0a8;
+  --accent-hover: #f2b8be;
+  --accent-contrast: #1d1013;
+  --accent-soft: #3a2428;
+  --danger: #ff8a80;
+  --focus-ring: #e8a0a8;
+  --nav-background: #2b2b35;
   --nav-link: #b8b8c2;
   --nav-link-active: white;
+  --nav-hover: #ffffff14;
   --favorite-background: #2a2a32;
   --favorite-icon: #d0d0d8;
   --favorite-pressed: #ff6b9a;
+  --shadow: 0 1px 2px #0006, 0 10px 30px -12px #000000cc;
 }
 
 *,
@@ -47,68 +103,194 @@ body {
   background: var(--page-background);
 }
 
-main {
-  max-width: 60rem;
-  margin: 0 auto;
-  padding: 1rem 1rem 5rem;
+:root[data-theme="dark"] body {
+  background:
+    radial-gradient(
+        ellipse 70% 40% at 50% 0,
+        color-mix(in srgb, var(--accent) 12%, transparent),
+        transparent 70%
+      )
+      no-repeat fixed,
+    var(--page-background);
 }
 
+h1,
+h2,
+h3 {
+  font-family: var(--font-heading);
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+a {
+  color: var(--accent);
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* Header */
+.site-header {
+  padding: var(--space-6) var(--space-4) var(--space-2);
+  text-align: center;
+}
+
+.site-header h1 {
+  margin: 0;
+  font-size: clamp(2rem, 6vw, 3.25rem);
+  letter-spacing: -0.01em;
+}
+
+.site-header h1::after {
+  display: block;
+  width: 3rem;
+  height: 3px;
+  margin: var(--space-3) auto 0;
+  content: "";
+  background: var(--accent);
+  border-radius: 3px;
+}
+
+main {
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: var(--space-4) var(--space-4) 8rem;
+}
+
+/* Navigation: a floating bar at the bottom */
 nav {
   position: fixed;
-  right: 0;
-  bottom: 0;
-  left: 0;
+  bottom: var(--space-4);
+  left: 50%;
   display: flex;
-  justify-content: center;
-  gap: 1.5rem;
-  padding: 1rem;
-  background: var(--nav-background);
+  gap: var(--space-1);
+  align-items: center;
+  max-width: calc(100% - var(--space-4));
+  padding: var(--space-2);
+  background: color-mix(in srgb, var(--nav-background) 92%, transparent);
+  border-radius: 999px;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(12px);
+  transform: translateX(-50%);
+}
+
+:root[data-theme="dark"] nav {
+  border: 1px solid #ffffff1f;
 }
 
 nav a {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  padding: var(--space-2) var(--space-4);
   color: var(--nav-link);
   text-decoration: none;
+  border-radius: 999px;
+  transition:
+    background var(--duration) var(--ease),
+    color var(--duration) var(--ease);
+}
+
+nav a:hover {
+  color: var(--nav-link-active);
+  background: var(--nav-hover);
 }
 
 nav a.active {
-  color: var(--nav-link-active);
-  text-decoration: underline;
+  color: var(--accent-contrast);
+  background: var(--accent);
 }
 
-.theme-toggle {
-  display: grid;
-  place-items: center;
-  width: 2rem;
-  height: 2rem;
-  padding: 0;
-  color: var(--nav-link);
+nav :focus-visible {
+  outline-color: var(--nav-link-active);
+}
+
+@media (width < 32rem) {
+  nav a {
+    flex-direction: column;
+    gap: 0;
+    padding: var(--space-2) var(--space-3);
+    font-size: 0.75rem;
+  }
+}
+
+/* Buttons: secondary by default, filled for the main action */
+:where(button) {
+  padding: var(--space-2) var(--space-4);
+  font: inherit;
+  font-size: 0.95rem;
+  color: var(--text);
   cursor: pointer;
-  background: none;
-  border: 1px solid var(--nav-link);
-  border-radius: 50%;
+  background: var(--surface);
+  border: 1px solid var(--control-border);
+  border-radius: 999px;
+  transition:
+    background var(--duration) var(--ease),
+    border-color var(--duration) var(--ease),
+    transform var(--duration) var(--ease);
 }
 
-.theme-toggle:hover {
-  color: var(--nav-link-active);
-  border-color: var(--nav-link-active);
+:where(button):hover {
+  background: var(--accent-soft);
+  border-color: var(--accent);
 }
 
+.button-primary,
+button[type="submit"] {
+  color: var(--accent-contrast);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.button-primary:hover,
+button[type="submit"]:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+/* Fields */
+input[type="text"],
+input[type="search"],
+select,
+textarea {
+  padding: var(--space-2) var(--space-3);
+  font: inherit;
+  color: var(--text);
+  background: var(--surface-raised);
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-sm);
+}
+
+label {
+  font-weight: 500;
+}
+
+/* Gallery filters */
 .gallery-filters {
   display: flex;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: var(--space-3) var(--space-4);
   align-items: center;
-  margin-bottom: 1rem;
+  margin-bottom: var(--space-5);
 }
 
 .gallery-filters label {
-  margin-right: 0.5rem;
+  margin-right: var(--space-2);
+}
+
+.gallery-filters[id] {
+  padding: var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
 }
 
 .color-filter {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
+  gap: var(--space-2);
   margin: 0;
   padding: 0;
   border: none;
@@ -116,63 +298,467 @@ nav a.active {
 
 .color-filter legend {
   padding: 0;
-  margin-bottom: 0.25rem;
+  margin-bottom: var(--space-2);
+  font-weight: 500;
 }
 
 .color-filter label {
+  position: relative;
   display: flex;
+  gap: var(--space-2);
   align-items: center;
-  gap: 0.35rem;
   margin-right: 0;
+  padding: var(--space-1) var(--space-3) var(--space-1) var(--space-1);
+  font-weight: 400;
   cursor: pointer;
+  background: var(--surface);
+  border: 1px solid var(--control-border);
+  border-radius: 999px;
+  transition:
+    background var(--duration) var(--ease),
+    border-color var(--duration) var(--ease);
+}
+
+.color-filter label:hover {
+  border-color: var(--accent);
+}
+
+.color-filter label:has(input:checked) {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.color-filter input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .color-circle {
-  width: 1.25rem;
-  height: 1.25rem;
+  width: 1.5rem;
+  height: 1.5rem;
   border: 1px solid var(--circle-border);
   border-radius: 50%;
 }
 
 .color-filter input:checked + .color-circle {
   outline: 2px solid var(--selected-outline);
+  outline-offset: 1px;
+}
+
+.color-filter input:focus-visible + .color-circle {
+  outline: 3px solid var(--focus-ring);
   outline-offset: 2px;
 }
 
+/* Art cards */
 .art-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: var(--space-5);
   padding: 0;
   list-style: none;
+}
+
+/* Cards in one row get the same height, even when a title wraps. */
+.art-list li {
+  display: flex;
+}
+
+.art-list .art-piece {
+  flex: 1;
 }
 
 .art-piece {
   position: relative;
   margin: 0;
+  overflow: hidden;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  transition: transform var(--duration) var(--ease);
 }
 
+.art-piece:hover {
+  transform: translateY(-2px);
+}
+
+.art-piece a {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+/* The whole picture is shown on a mat, so nothing is cropped. */
 .art-piece img {
   display: block;
   width: 100%;
-  height: 14rem;
-  object-fit: cover;
-  border-radius: 0.5rem;
+  height: 15rem;
+  padding: var(--space-4);
+  object-fit: contain;
+  background: var(--mat);
+  filter: drop-shadow(0 4px 10px #0004);
+  transition: transform 0.5s var(--ease);
+}
+
+.art-piece a:hover img,
+.art-piece a:focus-visible img {
+  transform: scale(1.04);
+}
+
+.art-piece figcaption {
+  position: relative;
+  padding: var(--space-4) var(--space-4) var(--space-4);
+  background: var(--surface);
 }
 
 .art-piece h2,
 .art-piece p {
-  margin: 0.25rem 0 0;
+  margin: 0;
 }
 
+.art-piece h2 {
+  font-size: 1.15rem;
+}
+
+.art-piece p {
+  color: var(--muted-text);
+}
+
+/* Cards flip on hover or keyboard focus to show year, genre and palette.
+   The faces carry the shape and shadow, so nothing clips the turning card. */
+.art-card {
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
+  background: none;
+  box-shadow: none;
+}
+
+.art-card > a {
+  display: flex;
+  flex: 1;
+  perspective: 1200px;
+}
+
+.card-inner {
+  display: grid;
+  flex: 1;
+  transition: transform 0.6s var(--ease);
+  transform-style: preserve-3d;
+}
+
+.card-front,
+.card-back {
+  grid-area: 1 / 1;
+  overflow: hidden;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    0 0 0 1px var(--card-edge),
+    var(--shadow);
+  backface-visibility: hidden;
+}
+
+.card-front {
+  display: flex;
+  flex-direction: column;
+}
+
+.card-front figcaption {
+  flex: 1;
+}
+
+.card-back {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-5) var(--space-5) calc(2.5rem + 2 * var(--space-3));
+  color: var(--accent-contrast);
+  text-align: center;
+  background: var(--accent);
+  transform: rotateY(180deg);
+}
+
+.card-year {
+  font-family: var(--font-heading);
+  font-size: 2.25rem;
+  line-height: 1;
+}
+
+.card-genre {
+  padding: var(--space-1) var(--space-3);
+  font-size: 0.85rem;
+  border: 1px solid currentcolor;
+  border-radius: 999px;
+}
+
+.card-palette {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.card-swatch {
+  width: 1.1rem;
+  height: 1.1rem;
+  border: 2px solid var(--accent-contrast);
+  border-radius: 50%;
+}
+
+.card-cta {
+  margin-top: var(--space-2);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 0.25em;
+}
+
+/* The arrow chip is for touch screens, where the card cannot flip. */
+.card-chip {
+  position: absolute;
+  top: var(--space-3);
+  left: var(--space-3);
+  display: none;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  color: var(--favorite-icon);
+  background: color-mix(in srgb, var(--favorite-background) 85%, transparent);
+  border-radius: 50%;
+  box-shadow: 0 1px 4px #0003;
+  backdrop-filter: blur(8px);
+}
+
+@media (hover: none) {
+  .card-chip {
+    display: grid;
+  }
+}
+
+/* The picture does not zoom as well while the card flips. */
+.art-card a:hover img,
+.art-card a:focus-visible img {
+  transform: none;
+}
+
+@media (hover: hover) {
+  .art-card:hover .card-inner,
+  .art-card:has(> a:focus-visible) .card-inner {
+    transform: rotateY(180deg);
+  }
+}
+
+/* No turning for people who prefer less motion: the back fades in instead. */
+@media (prefers-reduced-motion: reduce) {
+  .card-inner {
+    transform: none !important;
+  }
+
+  .card-back {
+    opacity: 0;
+    transform: none;
+  }
+
+  .art-card:hover .card-back,
+  .art-card:has(> a:focus-visible) .card-back {
+    opacity: 1;
+  }
+}
+
+/* Registered so the glow color changes smoothly from one piece to the next. */
+@property --art-glow {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+
+/* Spotlight: the stage fills the screen; a soft glow in the painting's color
+   spreads behind the whole page. */
+.spotlight-page {
+  --ambient-strength: 28%;
+
+  position: relative;
+  transition: --art-glow 0.9s var(--ease);
+}
+
+:root[data-theme="dark"] .spotlight-page {
+  --ambient-strength: 45%;
+}
+
+.spotlight-page::before {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  content: "";
+  background: radial-gradient(
+    ellipse 90% 70% at 50% 35%,
+    color-mix(in srgb, var(--art-glow) var(--ambient-strength), transparent),
+    transparent 75%
+  );
+}
+
+/* Spotlight: a framed picture hanging in front of a blurred copy of itself */
+.spotlight {
+  display: flex;
+  flex-direction: column;
+  isolation: isolate;
+  min-height: max(28rem, calc(100dvh - 20rem));
+  background: var(--mat);
+}
+
+.spotlight-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: center / cover;
+  filter: blur(40px) brightness(0.5) saturate(1.3);
+  transform: scale(1.3);
+  animation:
+    fade-in 0.9s var(--ease),
+    drift 24s ease-in-out infinite alternate;
+}
+
+.spotlight-stage {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6) var(--space-5) var(--space-5);
+}
+
+/* Mat inside, thin dark frame outside, a glow in the painting's color */
 .spotlight img {
-  height: 28rem;
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: clamp(18rem, calc(100dvh - 32rem), 46rem);
+  padding: var(--space-3);
+  background: #f4efe6;
+  border: 0.45rem solid #1b1815;
+  border-radius: 2px;
+  filter: none;
+  box-shadow:
+    0 0 0 1px #ffffff26,
+    0 30px 60px -10px #000000b3,
+    0 0 90px color-mix(in srgb, var(--art-glow) 70%, transparent);
+  animation: fade-in 0.6s var(--ease);
 }
 
+/* The wall label: artist in serif, a line and dots in the painting's colors */
+.spotlight figcaption {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  align-items: center;
+  padding: var(--space-3) var(--space-5) calc(var(--space-5) + var(--space-3));
+  text-align: center;
+  background: #000000a6;
+  border-top: 3px solid var(--art-glow);
+}
+
+.spotlight figcaption p {
+  font-family: var(--font-heading);
+  font-size: 1.75rem;
+  color: white;
+}
+
+.spotlight-palette {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.spotlight-swatch {
+  width: 0.9rem;
+  height: 0.9rem;
+  border: 1px solid #ffffff80;
+  border-radius: 50%;
+}
+
+/* Slideshow: a line along the bottom of the card fills in 5 seconds */
+.spotlight-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  z-index: 1;
+  width: 100%;
+  height: 4px;
+  pointer-events: none;
+  background: #ffffffcc;
+  transform-origin: left;
+  animation: progress linear forwards;
+}
+
+@keyframes progress {
+  from {
+    transform: scaleX(0);
+  }
+
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* Glass control pill with icon buttons, overlapping the bottom of the card */
+.spotlight-actions {
+  display: flex;
+  gap: var(--space-3);
+  width: fit-content;
+  padding: var(--space-2);
+  margin: calc(-1 * var(--space-5)) auto 0;
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(12px);
+
+  /* Above the card's bottom edge, which comes earlier in the page. */
+  position: relative;
+  z-index: 2;
+}
+
+.icon-button {
+  display: grid;
+  place-items: center;
+  width: 3.25rem;
+  height: 3.25rem;
+  padding: 0;
+}
+
+.icon-button:hover {
+  transform: scale(1.06);
+}
+
+@keyframes drift {
+  from {
+    transform: scale(1.3);
+  }
+
+  to {
+    transform: scale(1.5);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* Favorite heart: frosted glass on top of the picture */
 .favorite-button {
   position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
+  top: var(--space-3);
+  right: var(--space-3);
+  z-index: 1;
   display: grid;
   place-items: center;
   width: 2.5rem;
@@ -180,47 +766,434 @@ nav a.active {
   padding: 0;
   color: var(--favorite-icon);
   cursor: pointer;
-  background: var(--favorite-background);
+  background: color-mix(in srgb, var(--favorite-background) 85%, transparent);
   border: none;
   border-radius: 50%;
+  box-shadow: 0 1px 4px #0003;
+  backdrop-filter: blur(8px);
+}
+
+/* On cards the heart sits in the caption row, not on the picture. */
+.art-piece:not(.spotlight) .favorite-button {
+  top: auto;
+  bottom: var(--space-3);
+}
+
+/* Keep the caption text clear of the heart: its width plus both gaps. */
+.art-piece:not(.spotlight) figcaption {
+  padding-right: calc(2.5rem + 2 * var(--space-3));
+}
+
+.favorite-button:hover {
+  background: var(--favorite-background);
+  transform: scale(1.1);
 }
 
 .favorite-button[aria-pressed="true"] {
   color: var(--favorite-pressed);
 }
 
-.details {
-  position: relative;
+/* Marking a favorite: the heart pops and a ring spreads once. */
+.favorite-pop {
+  animation: heart-pop 0.45s var(--ease);
 }
 
-.details img {
+.favorite-pop::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  border: 2px solid var(--favorite-pressed);
+  border-radius: 50%;
+  animation: heart-ring 0.45s ease-out;
+}
+
+@keyframes heart-pop {
+  0% {
+    transform: scale(1);
+  }
+
+  40% {
+    transform: scale(1.35);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes heart-ring {
+  from {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: scale(2);
+  }
+}
+
+/* The favorites counter in the navigation bounces when its number changes. */
+.count-bump svg {
+  animation: count-bump 0.5s var(--ease);
+}
+
+@keyframes count-bump {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  35% {
+    transform: scale(1.5) rotate(-12deg);
+  }
+
+  65% {
+    transform: scale(0.9) rotate(6deg);
+  }
+}
+
+/* The picture travels between a card and its details page. */
+::view-transition-group(*) {
+  animation-duration: 0.5s;
+  animation-timing-function: cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none;
+  }
+}
+
+/* Dark mode reveal: the new mode grows as a circle from the toggle button.
+   ThemeToggle runs the circle; here the browser's own cross-fade is turned off
+   so that the old mode stays visible underneath. */
+.theme-reveal::view-transition-old(root),
+.theme-reveal::view-transition-new(root) {
+  mix-blend-mode: normal;
+  animation: none;
+}
+
+/* Cards come in one after another. */
+.art-list li {
+  animation: fade-up 0.5s var(--ease) both;
+}
+
+.art-list li:nth-child(2) {
+  animation-delay: 60ms;
+}
+
+.art-list li:nth-child(3) {
+  animation-delay: 120ms;
+}
+
+.art-list li:nth-child(4) {
+  animation-delay: 180ms;
+}
+
+.art-list li:nth-child(5) {
+  animation-delay: 240ms;
+}
+
+.art-list li:nth-child(6) {
+  animation-delay: 300ms;
+}
+
+.art-list li:nth-child(7) {
+  animation-delay: 360ms;
+}
+
+.art-list li:nth-child(8) {
+  animation-delay: 420ms;
+}
+
+.art-list li:nth-child(n + 9) {
+  animation-delay: 480ms;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(1.25rem);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Favorites: the pictures hang on a gallery wall, each on its own nail. */
+.favorites-wall {
+  padding: calc(var(--space-6) + var(--space-3)) var(--space-5) var(--space-6);
+  margin-top: var(--space-4);
+  background:
+    radial-gradient(
+      ellipse 80% 60% at 50% 0,
+      color-mix(in srgb, var(--accent) 16%, transparent),
+      transparent 70%
+    ),
+    var(--wall);
+  border-radius: var(--radius-lg);
+  box-shadow: inset 0 0 90px #0000002b;
+}
+
+.favorites-wall .art-list {
+  gap: calc(var(--space-6) + var(--space-3)) var(--space-5);
+  align-items: center;
+  margin: 0;
+}
+
+/* Each frame hugs its picture: the width follows the picture's shape (--ratio,
+   set when the picture loads), so that every picture gets about the same area. */
+.favorites-wall {
+  --wall-area: 270;
+}
+
+.favorites-wall .art-piece {
+  --picture-width: calc(sqrt(var(--wall-area) * var(--ratio, 1.3)) * 1rem);
+  --frame-extra: calc(2 * var(--space-3) + 0.8rem);
+
+  flex: 0 1 auto;
+  width: min(100%, calc(var(--picture-width) + var(--frame-extra)));
+  margin-inline: auto;
+}
+
+/* Dark frame and a cream mat, with a small label under the picture. */
+.favorites-wall .card-front,
+.favorites-wall .card-back {
+  border: 0.4rem solid var(--wall-frame);
+  border-radius: 2px;
+  box-shadow:
+    0 0 0 1px #ffffff1f,
+    0 22px 32px -14px #000000b3;
+}
+
+.favorites-wall .card-front,
+.favorites-wall .card-front figcaption {
+  background: var(--wall-mat);
+}
+
+.favorites-wall .card-front {
+  padding: var(--space-3) var(--space-3) 0;
+}
+
+.favorites-wall .art-piece img {
   width: 100%;
-  max-height: 32rem;
+  height: auto;
+  padding: 0;
+  object-fit: cover;
+  background: none;
+  filter: none;
+  box-shadow: 0 0 0 1px #00000026;
+  aspect-ratio: var(--ratio, 1.3);
+}
+
+.favorites-wall .art-piece h2 {
+  font-size: 1rem;
+  color: var(--wall-ink);
+}
+
+.favorites-wall .art-piece p {
+  font-size: 0.9rem;
+  color: var(--wall-muted);
+}
+
+/* The nail ... */
+.favorites-wall .art-card::before {
+  position: absolute;
+  top: -1.7rem;
+  left: 50%;
+  z-index: 1;
+  width: 0.7rem;
+  height: 0.7rem;
+  content: "";
+  background: radial-gradient(circle at 35% 30%, #d9cdb0, #7d7156);
+  border-radius: 50%;
+  box-shadow: 0 2px 3px #0006;
+  transform: translateX(-50%);
+}
+
+/* ... and the string down to the two corners of the frame. */
+.favorites-wall .art-card::after {
+  position: absolute;
+  top: -1.35rem;
+  right: 14%;
+  left: 14%;
+  height: calc(1.35rem - 1px);
+  pointer-events: none;
+  content: "";
+  background:
+    linear-gradient(
+        to bottom right,
+        transparent calc(50% - 0.75px),
+        #7d7156 50%,
+        transparent calc(50% + 0.75px)
+      )
+      left / 50% 100% no-repeat,
+    linear-gradient(
+        to bottom left,
+        transparent calc(50% - 0.75px),
+        #7d7156 50%,
+        transparent calc(50% + 0.75px)
+      )
+      right / 50% 100% no-repeat;
+}
+
+/* Details page */
+.details {
+  position: relative;
+  display: grid;
+  gap: var(--space-5);
+}
+
+.details > a {
+  display: inline-flex;
+  gap: var(--space-2);
+  align-items: center;
+  width: fit-content;
+  font-weight: 500;
+}
+
+.details > a::before {
+  content: "←";
+}
+
+/* Picture and info are one card: the mat on one side, the text on the other. */
+.details-card {
+  display: grid;
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+}
+
+.details-media {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: var(--space-5);
+  background: var(--mat);
+}
+
+.details-media img {
+  display: block;
+  width: 100%;
+  max-height: 34rem;
   object-fit: contain;
+  filter: drop-shadow(0 8px 20px #0006);
+}
+
+.details-info {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: center;
+  align-items: center;
+  padding: var(--space-6);
+}
+
+.details-info h2,
+.details-artist,
+.palette {
+  flex-basis: 100%;
+}
+
+.details-info h2 {
+  margin: 0;
+  font-size: clamp(1.9rem, 4vw, 2.5rem);
+  line-height: 1.15;
+}
+
+.details-info :where(p) {
+  margin: 0;
+}
+
+.details-artist {
+  margin-top: var(--space-3);
+  font-family: var(--font-heading);
+  font-size: 1.35rem;
+  color: var(--accent);
+}
+
+.details-year,
+.details-genre {
+  display: inline-block;
+  margin-top: var(--space-4);
+}
+
+.details-year {
+  margin-right: var(--space-3);
+  color: var(--muted-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.details-genre {
+  padding: var(--space-1) var(--space-3);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text);
+  background: var(--accent-soft);
+  border-radius: 999px;
 }
 
 .palette {
   display: flex;
-  gap: 0.5rem;
-  padding: 0;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin: var(--space-5) 0 0;
+  padding: var(--space-5) 0 0;
   list-style: none;
+  border-top: 1px solid var(--border);
 }
 
 .palette li {
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 50%;
+  width: 3.5rem;
+  height: 3.5rem;
   border: 1px solid var(--circle-border);
+  border-radius: 50%;
+  box-shadow: var(--shadow);
+}
+
+@media (width >= 48rem) {
+  .details-card {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  }
+}
+
+/* Comments */
+.details-comments h3 {
+  font-size: 1.5rem;
 }
 
 .comments {
+  margin: 0 0 var(--space-5);
   padding: 0;
   list-style: none;
 }
 
 .comments li {
-  padding: 0.5rem 0;
-  border-bottom: 1px solid var(--border);
+  margin-bottom: var(--space-3);
+  padding: var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.comments li p {
+  margin: 0;
+}
+
+.comments button:not(.comment-edited) {
+  margin: var(--space-3) var(--space-2) 0 0;
+  padding: var(--space-1) var(--space-3);
+  font-size: 0.85rem;
+}
+
+.comments button[aria-label^="Delete comment"] {
+  color: var(--danger);
 }
 
 .comment-meta {
@@ -236,11 +1209,13 @@ nav a.active {
   cursor: pointer;
   background: none;
   border: none;
+  border-radius: 0;
   text-decoration: underline dotted;
 }
 
 .comment-edited:hover {
   color: var(--hover-text);
+  background: none;
 }
 
 .comment-separator {
@@ -248,7 +1223,204 @@ nav a.active {
 }
 
 .comment-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  max-width: 36rem;
+}
+
+.comment-form label,
+.comment-form p {
+  flex-basis: 100%;
+  margin: 0;
+}
+
+.comment-form input {
+  flex: 1 1 14rem;
+}
+
+/* Loading, error, empty and not-found messages */
+.status-message {
+  max-width: 32rem;
+  margin: var(--space-6) auto;
+  padding: var(--space-5);
+  color: var(--muted-text);
+  text-align: center;
+  background: var(--surface);
+  border: 1px dashed var(--control-border);
+  border-radius: var(--radius-lg);
+}
+
+div.status-message p {
+  margin: 0 0 var(--space-4);
+}
+
+/* Status pages: an empty frame under a spotlight cone */
+.status-message:has(> .empty-frame) {
+  position: relative;
+  isolation: isolate;
+  padding-top: var(--space-6);
+  color: var(--text);
+  background: none;
+  border: none;
+}
+
+.status-message:has(> .empty-frame)::before {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  z-index: -1;
+  width: min(100%, 26rem);
+  height: 100%;
+  pointer-events: none;
+  content: "";
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    color-mix(in srgb, var(--accent) 30%, transparent) 18%,
+    transparent 90%
+  );
+  clip-path: polygon(42% 0, 58% 0, 100% 100%, 0 100%);
+  transform: translateX(-50%);
+  animation: fade-in 1.2s var(--ease);
+}
+
+.status-message:has(> .empty-frame) > p {
+  margin: 0 0 var(--space-4);
+  font-family: var(--font-heading);
+  font-size: 1.6rem;
+  color: var(--text);
+}
+
+.empty-frame {
+  width: 9rem;
+  aspect-ratio: 4 / 5;
+  padding: var(--space-3);
+  margin: 0 auto var(--space-5);
+  background: var(--frame-mat);
+  border: 0.45rem solid #1b1815;
+  border-radius: 2px;
+  box-shadow:
+    0 0 0 1px #ffffff26,
+    0 24px 40px -12px #000000b3;
+  transform-origin: top center;
+  animation: sway 1.8s var(--ease);
+}
+
+.empty-frame span {
   display: grid;
-  gap: 0.5rem;
-  max-width: 24rem;
+  place-items: center;
+  height: 100%;
+  font-family: var(--font-heading);
+  font-size: 2.75rem;
+  color: #8a857c;
+  background: var(--frame-canvas);
+  box-shadow: inset 0 2px 8px #0003;
+}
+
+/* Loading: the empty canvas shimmers */
+.empty-frame-loading {
+  animation: none;
+}
+
+.empty-frame-loading span {
+  background: linear-gradient(
+      100deg,
+      var(--frame-canvas) 30%,
+      var(--frame-mat) 50%,
+      var(--frame-canvas) 70%
+    )
+    0 0 / 250% 100%;
+  animation: shimmer 1.6s linear infinite;
+}
+
+.status-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  justify-content: center;
+}
+
+/* Links that look like buttons (zero specificity, like the base button) */
+:where(.button-link) {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-2) var(--space-4);
+  color: var(--text);
+  text-decoration: none;
+  background: var(--surface);
+  border: 1px solid var(--control-border);
+  border-radius: 999px;
+  transition:
+    background var(--duration) var(--ease),
+    border-color var(--duration) var(--ease);
+}
+
+:where(.button-link):hover {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+@keyframes sway {
+  0% {
+    transform: rotate(0);
+  }
+
+  25% {
+    transform: rotate(-2.5deg);
+  }
+
+  55% {
+    transform: rotate(1.5deg);
+  }
+
+  80% {
+    transform: rotate(-0.5deg);
+  }
+
+  100% {
+    transform: rotate(0);
+  }
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 100% 0;
+  }
+
+  to {
+    background-position: -100% 0;
+  }
+}
+
+/* Theme button in the navigation */
+.theme-toggle {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  color: var(--nav-link);
+  background: none;
+  border: none;
+  border-radius: 50%;
+}
+
+.theme-toggle:hover {
+  color: var(--nav-link-active);
+  background: var(--nav-hover);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spotlight-progress {
+    display: none;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
 }

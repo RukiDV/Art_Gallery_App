@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { mockColorScheme } from "../mockColorScheme";
@@ -149,5 +149,172 @@ describe("ThemeToggle", () => {
     expect(darkModeButton.querySelector("svg")?.innerHTML).not.toBe(
       lightModeIcon
     );
+  });
+});
+
+describe("ThemeToggle: circular reveal", () => {
+  type FakeTransition = { finished: Promise<void>; ready: Promise<void> };
+  const root = document.documentElement;
+
+  function stubViewTransition(finished: Promise<void> = Promise.resolve()) {
+    const startViewTransition = vi.fn((update: () => void): FakeTransition => {
+      update();
+      return { finished, ready: Promise.resolve() };
+    });
+    Object.assign(document, { startViewTransition });
+    return startViewTransition;
+  }
+
+  function stubAnimate() {
+    const animate = vi.fn();
+    Object.assign(root, { animate });
+    return animate;
+  }
+
+  function stubReducedMotion() {
+    vi.stubGlobal(
+      "matchMedia",
+      (query: string) =>
+        ({
+          matches: query === "(prefers-reduced-motion: reduce)",
+          media: query,
+          addEventListener: () => {},
+          removeEventListener: () => {},
+        }) as unknown as MediaQueryList
+    );
+  }
+
+  function expectedRadius(x: number, y: number) {
+    return Math.hypot(
+      Math.max(x, window.innerWidth - x),
+      Math.max(y, window.innerHeight - y)
+    );
+  }
+
+  afterEach(() => {
+    Reflect.deleteProperty(document, "startViewTransition");
+    Reflect.deleteProperty(root, "animate");
+    Reflect.deleteProperty(document, "getAnimations");
+    root.classList.remove("theme-reveal");
+  });
+
+  it("switches the mode inside a view transition when the browser has them", async () => {
+    const user = userEvent.setup();
+    mockColorScheme("light");
+    const startViewTransition = stubViewTransition();
+    render(<ThemeToggle />);
+
+    await user.click(
+      screen.getByRole("button", { name: "Switch to dark mode" })
+    );
+
+    expect(startViewTransition).toHaveBeenCalledTimes(1);
+    expect(root).toHaveAttribute("data-theme", "dark");
+    expect(
+      screen.getByRole("button", { name: "Switch to light mode" })
+    ).toBeInTheDocument();
+    expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe("dark");
+  });
+
+  it("grows the new mode as a circle that starts where the mouse clicked", async () => {
+    mockColorScheme("light");
+    stubViewTransition();
+    const animate = stubAnimate();
+    render(<ThemeToggle />);
+
+    fireEvent.click(screen.getByRole("button"), { clientX: 120, clientY: 40 });
+
+    await waitFor(() => expect(animate).toHaveBeenCalledTimes(1));
+    const [keyframes, options] = animate.mock.calls[0];
+    expect(keyframes.clipPath).toEqual([
+      "circle(0px at 120px 40px)",
+      `circle(${expectedRadius(120, 40)}px at 120px 40px)`,
+    ]);
+    expect(options).toMatchObject({
+      duration: 700,
+      pseudoElement: "::view-transition-new(root)",
+    });
+  });
+
+  it("starts the circle at the middle of the button when there is no mouse position", async () => {
+    mockColorScheme("light");
+    stubViewTransition();
+    const animate = stubAnimate();
+    render(<ThemeToggle />);
+    const button = screen.getByRole("button");
+    vi.spyOn(button, "getBoundingClientRect").mockReturnValue({
+      left: 100,
+      top: 20,
+      width: 40,
+      height: 40,
+    } as DOMRect);
+
+    fireEvent.click(button, { clientX: 0, clientY: 0 });
+
+    await waitFor(() => expect(animate).toHaveBeenCalledTimes(1));
+    expect(animate.mock.calls[0][0].clipPath[0]).toBe(
+      "circle(0px at 120px 40px)"
+    );
+  });
+
+  it("marks the page as revealing only while the transition runs", async () => {
+    mockColorScheme("light");
+    let finish: () => void = () => {};
+    stubViewTransition(new Promise<void>((resolve) => (finish = resolve)));
+    render(<ThemeToggle />);
+
+    fireEvent.click(screen.getByRole("button"));
+    expect(root).toHaveClass("theme-reveal");
+
+    finish();
+    await waitFor(() => expect(root).not.toHaveClass("theme-reveal"));
+  });
+
+  it("skips the transition for people who prefer less motion, and still switches", async () => {
+    const user = userEvent.setup();
+    stubReducedMotion();
+    const startViewTransition = stubViewTransition();
+    render(<ThemeToggle />);
+
+    await user.click(
+      screen.getByRole("button", { name: "Switch to dark mode" })
+    );
+
+    expect(startViewTransition).not.toHaveBeenCalled();
+    expect(root).toHaveAttribute("data-theme", "dark");
+  });
+
+  it("does not start a second transition while the first one is still running, and still switches", () => {
+    mockColorScheme("light");
+    const startViewTransition = stubViewTransition(new Promise(() => {}));
+    render(<ThemeToggle />);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Switch to dark mode" })
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Switch to light mode" })
+    );
+
+    expect(startViewTransition).toHaveBeenCalledTimes(1);
+    expect(root).toHaveAttribute("data-theme", "light");
+  });
+
+  it("does not start a transition while the page is already running one, such as a picture gliding to another page", () => {
+    mockColorScheme("light");
+    const startViewTransition = stubViewTransition();
+    Object.assign(document, {
+      getAnimations: () => [
+        { effect: { pseudoElement: "::view-transition-group(art-picture-x)" } },
+      ],
+    });
+    render(<ThemeToggle />);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Switch to dark mode" })
+    );
+
+    expect(startViewTransition).not.toHaveBeenCalled();
+    expect(root).toHaveAttribute("data-theme", "dark");
   });
 });

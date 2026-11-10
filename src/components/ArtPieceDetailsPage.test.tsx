@@ -288,4 +288,16 @@ describe("ArtPieceDetailsPage", () => {
     expect(screen.getByText("Art piece not found")).toBeInTheDocument();
     expect(screen.queryByRole("img")).not.toBeInTheDocument();
   });
+
+  it("shows a link back to the gallery and a decorative empty frame for an unknown slug", () => {
+    renderDetails("does-not-exist");
+
+    expect(
+      screen.getByRole("link", { name: "Back to the gallery" })
+    ).toHaveAttribute("href", "/art-pieces");
+    expect(document.querySelector(".empty-frame")).toHaveAttribute(
+      "aria-hidden",
+      "true"
+    );
+  });
 });
