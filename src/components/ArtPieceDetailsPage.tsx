@@ -7,6 +7,7 @@ import CommentForm from "./CommentForm";
 import Comments from "./Comments";
 import EmptyFrame from "./EmptyFrame";
 import FavoriteButton from "./FavoriteButton";
+import TransitionLink, { OPEN_DETAILS_TRANSITION } from "./TransitionLink";
 
 type ArtPieceDetailsPageProps = {
   artPieces: ArtPiece[];
@@ -46,13 +47,13 @@ export default function ArtPieceDetailsPage({
 
   return (
     <article className="details">
-      <Link to="/art-pieces">Back</Link>
+      <TransitionLink to="/art-pieces">Back</TransitionLink>
       <div className="details-card">
         <div className="details-media">
           <ViewTransition
             name={`art-picture-${artPiece.slug}`}
             default="none"
-            share="auto"
+            share={{ [OPEN_DETAILS_TRANSITION]: "auto", default: "none" }}
           >
             <img src={artPiece.imageSource} alt={artPiece.name} />
           </ViewTransition>

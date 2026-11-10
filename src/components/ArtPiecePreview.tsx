@@ -1,8 +1,8 @@
 import { ViewTransition } from "react";
-import { Link } from "react-router";
 
 import type { ArtPiece } from "../types";
 import FavoriteButton from "./FavoriteButton";
+import TransitionLink, { OPEN_DETAILS_TRANSITION } from "./TransitionLink";
 
 type ArtPiecePreviewProps = {
   artPiece: ArtPiece;
@@ -17,14 +17,14 @@ export default function ArtPiecePreview({
 }: ArtPiecePreviewProps) {
   return (
     <figure className="art-piece art-card">
-      <Link to={`/art-pieces/${artPiece.slug}`}>
+      <TransitionLink to={`/art-pieces/${artPiece.slug}`}>
         <div className="card-inner">
           <div className="card-front">
             {/* The same name on the details page makes the picture travel there. */}
             <ViewTransition
               name={`art-picture-${artPiece.slug}`}
               default="none"
-              share="auto"
+              share={{ [OPEN_DETAILS_TRANSITION]: "auto", default: "none" }}
             >
               <img src={artPiece.imageSource} alt={artPiece.name} />
             </ViewTransition>
@@ -53,7 +53,7 @@ export default function ArtPiecePreview({
             <span className="card-cta">View details →</span>
           </div>
         </div>
-      </Link>
+      </TransitionLink>
       <FavoriteButton
         artPieceName={artPiece.name}
         isFavorite={isFavorite}
