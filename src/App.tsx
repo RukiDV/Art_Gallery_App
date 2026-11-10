@@ -17,9 +17,13 @@ const ART_PIECES_URL = "https://example-apis.vercel.app/api/art";
 export default function App() {
   const {
     data: artPieces,
-    isLoading,
+    isValidating,
     error,
-  } = useSWR<ArtPiece[], Error>(ART_PIECES_URL, fetcher);
+    mutate,
+  } = useSWR<ArtPiece[], Error>(ART_PIECES_URL, fetcher, {
+    // The Try again button replaces SWR's silent automatic retries.
+    shouldRetryOnError: false,
+  });
   const [artPiecesInfo, setArtPiecesInfo] =
     useState<ArtPieceInfo[]>(loadArtPiecesInfo);
 
@@ -96,11 +100,22 @@ export default function App() {
   }
 
   function withArtPieces(render: (artPieces: ArtPiece[]) => ReactNode) {
-    if (error) {
-      return <p>Failed to load the art pieces. Please try again later.</p>;
+    // SWR keeps the old error while it loads again, so a retry without data
+    // must not show the error.
+    const isLoadingWithoutData = isValidating && !artPieces;
+
+    if (error && !isLoadingWithoutData) {
+      return (
+        <>
+          <p>Failed to load the art pieces. Please try again later.</p>
+          <button type="button" onClick={() => mutate()}>
+            Try again
+          </button>
+        </>
+      );
     }
 
-    if (isLoading || !artPieces) {
+    if (!artPieces) {
       return <p>Loading art pieces…</p>;
     }
 

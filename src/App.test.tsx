@@ -39,6 +39,29 @@ function renderApp(route: string) {
   );
 }
 
+type FetchOutcome = "fails" | "works" | "never finishes";
+
+const fetchResponses: Record<FetchOutcome, () => Promise<unknown>> = {
+  fails: () => Promise.resolve({ ok: false, status: 500 }),
+  works: () => Promise.resolve({ ok: true, json: async () => artPieces }),
+  "never finishes": () => new Promise(() => {}),
+};
+
+// One outcome per call of fetch, in order; the last outcome is repeated.
+function stubFetchWithOutcomes(...outcomes: FetchOutcome[]) {
+  const fetchMock = vi.fn();
+  outcomes.forEach((outcome, index) => {
+    const response = fetchResponses[outcome]();
+    if (index < outcomes.length - 1) {
+      fetchMock.mockReturnValueOnce(response);
+    } else {
+      fetchMock.mockReturnValue(response);
+    }
+  });
+  vi.stubGlobal("fetch", fetchMock);
+  return fetchMock;
+}
+
 function stubFetchWithArtPieces() {
   vi.stubGlobal(
     "fetch",
@@ -1263,5 +1286,124 @@ describe("App", () => {
     renderApp("/art-pieces");
 
     expect(await screen.findAllByRole("listitem")).toHaveLength(2);
+  });
+
+  it('shows a "Try again" button together with the error message', async () => {
+    stubFetchWithOutcomes("fails");
+
+    renderApp("/art-pieces");
+
+    expect(await screen.findByText(/failed/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Try again" })
+    ).toBeInTheDocument();
+  });
+
+  it.each(["/", "/art-pieces", "/art-pieces/the-harvesters", "/favorites"])(
+    "shows the Try again button on %s when the art pieces cannot be loaded",
+    async (route) => {
+      stubFetchWithOutcomes("fails");
+
+      renderApp(route);
+
+      expect(
+        await screen.findByRole("button", { name: "Try again" })
+      ).toBeInTheDocument();
+    }
+  );
+
+  it("loads the art pieces again and shows the loading message while it loads", async () => {
+    const user = userEvent.setup();
+    const fetchMock = stubFetchWithOutcomes("fails", "never finishes");
+
+    renderApp("/art-pieces");
+    await user.click(await screen.findByRole("button", { name: "Try again" }));
+
+    expect(await screen.findByText(/loading/i)).toBeInTheDocument();
+    expect(screen.queryByText(/failed/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Try again" })
+    ).not.toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("shows the art pieces and no error or button when the second try works", async () => {
+    const user = userEvent.setup();
+    stubFetchWithOutcomes("fails", "works");
+
+    renderApp("/art-pieces");
+    await user.click(await screen.findByRole("button", { name: "Try again" }));
+
+    expect(await screen.findAllByRole("listitem")).toHaveLength(2);
+    expect(screen.queryByText(/failed/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Try again" })
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows the error message and the button again when the second try fails too, and a third try can work", async () => {
+    const user = userEvent.setup();
+    let finishSecondTry: (response: unknown) => void = () => {};
+    const secondTry = new Promise((resolve) => {
+      finishSecondTry = resolve;
+    });
+    const fetchMock = vi
+      .fn()
+      .mockReturnValueOnce(fetchResponses.fails())
+      .mockReturnValueOnce(secondTry)
+      .mockReturnValue(fetchResponses.works());
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderApp("/art-pieces");
+    await user.click(await screen.findByRole("button", { name: "Try again" }));
+    expect(await screen.findByText(/loading/i)).toBeInTheDocument();
+
+    finishSecondTry({ ok: false, status: 500 });
+
+    expect(await screen.findByText(/failed/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Try again" })
+    ).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+
+    await user.click(screen.getByRole("button", { name: "Try again" }));
+
+    expect(await screen.findAllByRole("listitem")).toHaveLength(2);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it("works the same way on a details page", async () => {
+    const user = userEvent.setup();
+    stubFetchWithOutcomes("fails", "works");
+
+    renderApp("/art-pieces/the-harvesters");
+    await user.click(await screen.findByRole("button", { name: "Try again" }));
+
+    expect(
+      await screen.findByRole("heading", { name: "The Harvesters" })
+    ).toBeInTheDocument();
+  });
+
+  it("shows no Try again button when the art pieces were loaded", async () => {
+    stubFetchWithOutcomes("works");
+
+    renderApp("/art-pieces");
+
+    expect(await screen.findAllByRole("listitem")).toHaveLength(2);
+    expect(
+      screen.queryByRole("button", { name: "Try again" })
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows no Try again button on an unknown URL, and keeps the navigation, when the art pieces cannot be loaded", async () => {
+    stubFetchWithOutcomes("fails");
+
+    renderApp("/does-not-exist");
+
+    expect(await screen.findByText("Page not found")).toBeInTheDocument();
+    expect(screen.getByRole("navigation")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Try again" })
+    ).not.toBeInTheDocument();
   });
 });
