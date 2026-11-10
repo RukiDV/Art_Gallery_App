@@ -72,6 +72,15 @@ export default function App() {
     }));
   }
 
+  function editComment(slug: string, commentId: string, text: string) {
+    updateInfo(slug, (info) => ({
+      ...info,
+      comments: info.comments.map((comment) =>
+        comment.id === commentId ? { ...comment, text, edited: true } : comment
+      ),
+    }));
+  }
+
   function withArtPieces(render: (artPieces: ArtPiece[]) => ReactNode) {
     if (error) {
       return <p>Failed to load the art pieces. Please try again later.</p>;
@@ -119,6 +128,7 @@ export default function App() {
                 getComments={getComments}
                 onAddComment={addComment}
                 onDeleteComment={deleteComment}
+                onEditComment={editComment}
               />
             ))}
           />

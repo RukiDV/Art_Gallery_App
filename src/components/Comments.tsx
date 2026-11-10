@@ -1,30 +1,29 @@
 import type { ArtPieceComment } from "../types";
+import CommentItem from "./CommentItem";
 
 type CommentsProps = {
   comments: ArtPieceComment[];
   onDeleteComment: (id: string) => void;
+  onEditComment: (id: string, text: string) => void;
 };
 
-export default function Comments({ comments, onDeleteComment }: CommentsProps) {
+export default function Comments({
+  comments,
+  onDeleteComment,
+  onEditComment,
+}: CommentsProps) {
   return (
     <section>
       <h3>Comments</h3>
       {comments.length > 0 && (
         <ul className="comments">
           {comments.map((comment) => (
-            <li key={comment.id}>
-              <p>{comment.text}</p>
-              <time dateTime={comment.date}>
-                {new Date(comment.date).toLocaleString()}
-              </time>
-              <button
-                type="button"
-                aria-label={`Delete comment: ${comment.text}`}
-                onClick={() => onDeleteComment(comment.id)}
-              >
-                Delete
-              </button>
-            </li>
+            <CommentItem
+              key={comment.id}
+              comment={comment}
+              onDelete={onDeleteComment}
+              onEdit={onEditComment}
+            />
           ))}
         </ul>
       )}

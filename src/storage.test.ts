@@ -206,6 +206,51 @@ describe("loadArtPiecesInfo with comment ids", () => {
   });
 });
 
+describe("loadArtPiecesInfo with the edited flag", () => {
+  const editedComment = {
+    id: "comment-1",
+    text: "Fixed a typo",
+    date: "2026-11-09T10:15:00.000Z",
+    edited: true,
+  };
+
+  it.each([true, false])("keeps a comment with edited set to %s", (edited) => {
+    const entry: ArtPieceInfo = {
+      slug: "the-harvesters",
+      isFavorite: false,
+      comments: [{ ...editedComment, edited }],
+    };
+    saveArtPiecesInfo([entry]);
+
+    expect(loadArtPiecesInfo()).toEqual([entry]);
+  });
+
+  it("keeps a comment without the edited flag as it is", () => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(info));
+
+    expect(loadArtPiecesInfo()[0].comments[0]).not.toHaveProperty("edited");
+  });
+
+  it.each([["yes"], [1], [null]])(
+    "ignores an entry with a comment whose edited flag is %s",
+    (edited) => {
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify([
+          {
+            slug: "the-harvesters",
+            isFavorite: true,
+            comments: [{ ...editedComment, edited }],
+          },
+          info[1],
+        ])
+      );
+
+      expect(loadArtPiecesInfo()).toEqual([info[1]]);
+    }
+  );
+});
+
 describe("saveArtPiecesInfo", () => {
   it("stores the list as JSON under one key", () => {
     saveArtPiecesInfo(info);

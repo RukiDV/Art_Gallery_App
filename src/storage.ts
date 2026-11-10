@@ -3,7 +3,12 @@ import type { ArtPieceInfo } from "./types";
 export const STORAGE_KEY = "art-pieces-info";
 
 // Comments saved before they had an id are still valid: they get one on load.
-type StoredComment = { id?: string; text: string; date: string };
+type StoredComment = {
+  id?: string;
+  text: string;
+  date: string;
+  edited?: boolean;
+};
 type StoredArtPieceInfo = Omit<ArtPieceInfo, "comments"> & {
   comments: StoredComment[];
 };
@@ -17,7 +22,8 @@ function isStoredComment(value: unknown): value is StoredComment {
     isRecord(value) &&
     (value.id === undefined || typeof value.id === "string") &&
     typeof value.text === "string" &&
-    typeof value.date === "string"
+    typeof value.date === "string" &&
+    (value.edited === undefined || typeof value.edited === "boolean")
   );
 }
 

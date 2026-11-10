@@ -12,6 +12,7 @@ export type ArtPieceComment = {
   id: string;
   text: string;
   date: string;
+  edited?: boolean;
 };
 
 export type ArtPieceInfo = {
