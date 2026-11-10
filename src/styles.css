@@ -1,3 +1,38 @@
+/* One set of colors per mode; ThemeToggle sets data-theme on <html>. */
+:root {
+  color-scheme: light;
+  --page-background: #f6f4ef;
+  --text: #222;
+  --muted-text: #666;
+  --hover-text: #222;
+  --border: #0002;
+  --circle-border: #0003;
+  --selected-outline: #222;
+  --nav-background: #222;
+  --nav-link: #ccc;
+  --nav-link-active: white;
+  --favorite-background: white;
+  --favorite-icon: #444;
+  --favorite-pressed: #d6336c;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page-background: #16161a;
+  --text: #ececec;
+  --muted-text: #a8a8b3;
+  --hover-text: white;
+  --border: #fff3;
+  --circle-border: #fff4;
+  --selected-outline: #ececec;
+  --nav-background: #0d0d10;
+  --nav-link: #b8b8c2;
+  --nav-link-active: white;
+  --favorite-background: #2a2a32;
+  --favorite-icon: #d0d0d8;
+  --favorite-pressed: #ff6b9a;
+}
+
 *,
 *::before,
 *::after {
@@ -8,8 +43,8 @@ body {
   margin: 0;
   font-family: system-ui, sans-serif;
   line-height: 1.5;
-  color: #222;
-  background: #f6f4ef;
+  color: var(--text);
+  background: var(--page-background);
 }
 
 main {
@@ -27,17 +62,35 @@ nav {
   justify-content: center;
   gap: 1.5rem;
   padding: 1rem;
-  background: #222;
+  background: var(--nav-background);
 }
 
 nav a {
-  color: #ccc;
+  color: var(--nav-link);
   text-decoration: none;
 }
 
 nav a.active {
-  color: white;
+  color: var(--nav-link-active);
   text-decoration: underline;
+}
+
+.theme-toggle {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  color: var(--nav-link);
+  cursor: pointer;
+  background: none;
+  border: 1px solid var(--nav-link);
+  border-radius: 50%;
+}
+
+.theme-toggle:hover {
+  color: var(--nav-link-active);
+  border-color: var(--nav-link-active);
 }
 
 .gallery-filters {
@@ -77,12 +130,12 @@ nav a.active {
 .color-circle {
   width: 1.25rem;
   height: 1.25rem;
-  border: 1px solid #0003;
+  border: 1px solid var(--circle-border);
   border-radius: 50%;
 }
 
 .color-filter input:checked + .color-circle {
-  outline: 2px solid #222;
+  outline: 2px solid var(--selected-outline);
   outline-offset: 2px;
 }
 
@@ -125,15 +178,15 @@ nav a.active {
   width: 2.5rem;
   height: 2.5rem;
   padding: 0;
-  color: #444;
+  color: var(--favorite-icon);
   cursor: pointer;
-  background: white;
+  background: var(--favorite-background);
   border: none;
   border-radius: 50%;
 }
 
 .favorite-button[aria-pressed="true"] {
-  color: #d6336c;
+  color: var(--favorite-pressed);
 }
 
 .details {
@@ -157,7 +210,7 @@ nav a.active {
   width: 2.5rem;
   height: 2.5rem;
   border-radius: 50%;
-  border: 1px solid #0003;
+  border: 1px solid var(--circle-border);
 }
 
 .comments {
@@ -167,13 +220,13 @@ nav a.active {
 
 .comments li {
   padding: 0.5rem 0;
-  border-bottom: 1px solid #0002;
+  border-bottom: 1px solid var(--border);
 }
 
 .comment-meta {
   margin: 0;
   font-size: 0.8rem;
-  color: #666;
+  color: var(--muted-text);
 }
 
 .comment-edited {
@@ -187,7 +240,7 @@ nav a.active {
 }
 
 .comment-edited:hover {
-  color: #222;
+  color: var(--hover-text);
 }
 
 .comment-separator {

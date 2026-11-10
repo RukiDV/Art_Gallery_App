@@ -122,3 +122,19 @@ describe("Navigation favorites counter", () => {
     expect(link).toHaveClass("active");
   });
 });
+
+describe("Navigation theme button", () => {
+  it("shows the button that switches between light and dark mode", () => {
+    renderNavigation("/");
+
+    expect(
+      screen.getByRole("button", { name: "Switch to dark mode" })
+    ).toBeInTheDocument();
+  });
+
+  it("does not add a link", () => {
+    renderNavigation("/");
+
+    expect(screen.getAllByRole("link")).toHaveLength(3);
+  });
+});
