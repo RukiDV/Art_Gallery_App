@@ -13,6 +13,7 @@
   --circle-border: #0003;
   --control-border: #8a857c;
   --mat: #ece8df;
+  --wall: #e6dfd0;
   --selected-outline: #222;
   --accent: #8c2f39;
   --accent-hover: #6f232c;
@@ -56,6 +57,7 @@
   --circle-border: #fff4;
   --control-border: #7a7a88;
   --mat: #101014;
+  --wall: #24211e;
   --selected-outline: #ececec;
   --accent: #e8a0a8;
   --accent-hover: #f2b8be;
@@ -890,6 +892,115 @@ label {
     opacity: 1;
     transform: none;
   }
+}
+
+/* Favorites: the pictures hang on a gallery wall, each on its own nail. */
+.favorites-wall {
+  padding: calc(var(--space-6) + var(--space-3)) var(--space-5) var(--space-6);
+  margin-top: var(--space-4);
+  background:
+    radial-gradient(
+      ellipse 80% 60% at 50% 0,
+      color-mix(in srgb, var(--accent) 16%, transparent),
+      transparent 70%
+    ),
+    var(--wall);
+  border-radius: var(--radius-lg);
+  box-shadow: inset 0 0 90px #0000002b;
+}
+
+.favorites-wall .art-list {
+  gap: calc(var(--space-6) + var(--space-3)) var(--space-5);
+  align-items: center;
+  margin: 0;
+}
+
+/* Different heights, so the wall looks hung by hand. */
+.favorites-wall .art-list li:nth-child(3n + 1) img {
+  height: 19rem;
+}
+
+.favorites-wall .art-list li:nth-child(3n + 2) img {
+  height: 13rem;
+}
+
+.favorites-wall .art-list li:nth-child(3n) img {
+  height: 16rem;
+}
+
+/* Dark frame and a cream mat, with a small label under the picture. */
+.favorites-wall .card-front,
+.favorites-wall .card-back {
+  border: 0.4rem solid #1b1815;
+  border-radius: 2px;
+  box-shadow:
+    0 0 0 1px #ffffff1f,
+    0 22px 32px -14px #000000b3;
+}
+
+.favorites-wall .card-front,
+.favorites-wall .card-front figcaption {
+  background: #f4efe6;
+}
+
+.favorites-wall .art-piece img {
+  background: #f4efe6;
+  filter: drop-shadow(0 3px 6px #0004);
+}
+
+.favorites-wall .art-piece h2 {
+  font-size: 1rem;
+  color: #222;
+}
+
+.favorites-wall .art-piece p {
+  font-size: 0.9rem;
+  color: #5c574f;
+}
+
+.favorites-wall .art-list li {
+  position: relative;
+}
+
+/* The nail ... */
+.favorites-wall .art-list li::before {
+  position: absolute;
+  top: -1.4rem;
+  left: 50%;
+  z-index: 1;
+  width: 0.7rem;
+  height: 0.7rem;
+  content: "";
+  background: radial-gradient(circle at 35% 30%, #d9cdb0, #7d7156);
+  border-radius: 50%;
+  box-shadow: 0 2px 3px #0006;
+  transform: translateX(-50%);
+}
+
+/* ... and the string down to the two corners of the frame. */
+.favorites-wall .art-list li::after {
+  position: absolute;
+  top: -1.1rem;
+  right: 14%;
+  left: 14%;
+  height: 1.3rem;
+  pointer-events: none;
+  content: "";
+  background:
+    linear-gradient(
+        to bottom right,
+        transparent calc(50% - 0.75px),
+        #7d7156 50%,
+        transparent calc(50% + 0.75px)
+      )
+      left / 50% 100% no-repeat,
+    linear-gradient(
+        to bottom left,
+        transparent calc(50% - 0.75px),
+        #7d7156 50%,
+        transparent calc(50% + 0.75px)
+      )
+      right / 50% 100% no-repeat;
 }
 
 /* Details page */
