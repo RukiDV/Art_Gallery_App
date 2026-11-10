@@ -1,5 +1,7 @@
+import type { ReactNode } from "react";
+
 type EmptyFrameProps = {
-  symbol?: string;
+  symbol?: ReactNode;
   isLoading?: boolean;
 };
 
