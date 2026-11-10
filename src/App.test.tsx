@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { SWRConfig } from "swr";
@@ -86,6 +86,10 @@ async function addComment(
     );
   }
   await user.click(screen.getByRole("button", { name: "Add comment" }));
+}
+
+async function openFilters(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(await screen.findByRole("button", { name: /^Filters/ }));
 }
 
 async function startEditingComment(
@@ -1065,6 +1069,279 @@ describe("App", () => {
     ).toBeInTheDocument();
   });
 
+  it("has a search field and a genre control on the Gallery page", async () => {
+    const user = userEvent.setup();
+    stubFetchWithArtPieces();
+
+    renderApp("/art-pieces");
+
+    expect(
+      await screen.findByRole("searchbox", { name: "Search" })
+    ).toBeInTheDocument();
+    await openFilters(user);
+    expect(screen.getByRole("combobox", { name: "Genre" })).toBeInTheDocument();
+    expect(screen.getAllByRole("listitem")).toHaveLength(2);
+  });
+
+  it("narrows the Gallery by the search text and by the genre", async () => {
+    const user = userEvent.setup();
+    stubFetchWithArtPieces();
+
+    renderApp("/art-pieces");
+    await user.type(
+      await screen.findByRole("searchbox", { name: "Search" }),
+      "  VAN gogh "
+    );
+
+    expect(screen.getAllByRole("listitem")).toHaveLength(1);
+    expect(
+      screen.getByRole("heading", { name: "Wheat Field with Cypresses" })
+    ).toBeInTheDocument();
+
+    await openFilters(user);
+    await user.selectOptions(
+      screen.getByRole("combobox", { name: "Genre" }),
+      "Renaissance"
+    );
+
+    expect(screen.getByText("No art pieces found")).toBeInTheDocument();
+    expect(screen.queryByRole("list")).not.toBeInTheDocument();
+  });
+
+  it("still lets the user mark a filtered piece as favorite", async () => {
+    const user = userEvent.setup();
+    stubFetchWithArtPieces();
+
+    renderApp("/art-pieces");
+    await user.type(
+      await screen.findByRole("searchbox", { name: "Search" }),
+      "harvest"
+    );
+    await user.click(
+      screen.getByRole("button", { name: "Favorite The Harvesters" })
+    );
+
+    expect(
+      screen.getByRole("link", { name: "Favorites (1)" })
+    ).toBeInTheDocument();
+  });
+
+  it.each(["/", "/favorites"])(
+    "has no search field and no genre control on %s",
+    async (route) => {
+      stubFetchWithArtPieces();
+
+      renderApp(route);
+      await waitFor(() =>
+        expect(screen.queryByText(/loading/i)).not.toBeInTheDocument()
+      );
+
+      expect(
+        screen.queryByRole("searchbox", { name: "Search" })
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("combobox", { name: "Genre" })
+      ).not.toBeInTheDocument();
+    }
+  );
+
+  it("does not change what the Favorites page lists when the Gallery was filtered", async () => {
+    const user = userEvent.setup();
+    stubFetchWithArtPieces();
+
+    renderApp("/art-pieces");
+    await user.click(
+      await screen.findByRole("button", { name: "Favorite The Harvesters" })
+    );
+    await user.click(
+      screen.getByRole("button", {
+        name: "Favorite Wheat Field with Cypresses",
+      })
+    );
+    await user.type(
+      screen.getByRole("searchbox", { name: "Search" }),
+      "harvest"
+    );
+    await user.click(screen.getByRole("link", { name: /^Favorites/ }));
+
+    expect(await screen.findAllByRole("listitem")).toHaveLength(2);
+  });
+
+  it("offers the color families of the paintings on the Gallery page", async () => {
+    const user = userEvent.setup();
+    stubFetchWithArtPieces();
+
+    renderApp("/art-pieces");
+    await openFilters(user);
+
+    const group = await screen.findByRole("group", { name: "Color" });
+    expect(
+      within(group)
+        .getAllByRole("checkbox")
+        .map((checkbox) => checkbox.closest("label")?.textContent)
+    ).toEqual(["Green", "Blue", "Brown", "Neutral"]);
+  });
+
+  it("shows the paintings that have the clicked color, and the ones with any of several colors", async () => {
+    const user = userEvent.setup();
+    stubFetchWithArtPieces();
+
+    renderApp("/art-pieces");
+    await openFilters(user);
+    await user.click(await screen.findByRole("checkbox", { name: "Blue" }));
+
+    expect(screen.getAllByRole("listitem")).toHaveLength(1);
+    expect(
+      screen.getByRole("heading", { name: "Wheat Field with Cypresses" })
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("checkbox", { name: "Green" }));
+
+    expect(screen.getAllByRole("listitem")).toHaveLength(2);
+
+    await user.click(screen.getByRole("checkbox", { name: "Green" }));
+    await user.click(screen.getByRole("checkbox", { name: "Blue" }));
+
+    expect(screen.getAllByRole("listitem")).toHaveLength(2);
+  });
+
+  it("combines the color with the search on the Gallery page", async () => {
+    const user = userEvent.setup();
+    stubFetchWithArtPieces();
+
+    renderApp("/art-pieces");
+    await openFilters(user);
+    await user.click(await screen.findByRole("checkbox", { name: "Brown" }));
+    await user.type(screen.getByRole("searchbox", { name: "Search" }), "wheat");
+
+    expect(screen.getByText("No art pieces found")).toBeInTheDocument();
+  });
+
+  it.each(["/", "/favorites"])("has no color filter on %s", async (route) => {
+    stubFetchWithArtPieces();
+
+    renderApp(route);
+    await waitFor(() =>
+      expect(screen.queryByText(/loading/i)).not.toBeInTheDocument()
+    );
+
+    expect(
+      screen.queryByRole("group", { name: "Color" })
+    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+  });
+
+  it("does not change what the Favorites page lists when a color was selected in the Gallery", async () => {
+    const user = userEvent.setup();
+    stubFetchWithArtPieces();
+
+    renderApp("/art-pieces");
+    await user.click(
+      await screen.findByRole("button", { name: "Favorite The Harvesters" })
+    );
+    await user.click(
+      screen.getByRole("button", {
+        name: "Favorite Wheat Field with Cypresses",
+      })
+    );
+    await openFilters(user);
+    await user.click(screen.getByRole("checkbox", { name: "Blue" }));
+    await user.click(screen.getByRole("link", { name: /^Favorites/ }));
+
+    expect(await screen.findAllByRole("listitem")).toHaveLength(2);
+  });
+
+  it("shows the Search field and a Filters button on the Gallery page, with Genre and Color hidden at the start", async () => {
+    stubFetchWithArtPieces();
+
+    renderApp("/art-pieces");
+
+    expect(
+      await screen.findByRole("searchbox", { name: "Search" })
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Filters" })).toHaveAttribute(
+      "aria-expanded",
+      "false"
+    );
+    expect(
+      screen.queryByRole("combobox", { name: "Genre" })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("group", { name: "Color" })
+    ).not.toBeInTheDocument();
+  });
+
+  it("keeps the Gallery filtered and shows the number of filters when the panel is closed", async () => {
+    const user = userEvent.setup();
+    stubFetchWithArtPieces();
+
+    renderApp("/art-pieces");
+    await openFilters(user);
+    await user.click(screen.getByRole("checkbox", { name: "Blue" }));
+    await user.click(screen.getByRole("button", { name: "Filters (1)" }));
+
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+    expect(screen.getAllByRole("listitem")).toHaveLength(1);
+    expect(
+      screen.getByRole("heading", { name: "Wheat Field with Cypresses" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Filters (1)" })
+    ).toBeInTheDocument();
+  });
+
+  it.each(["/", "/favorites"])("has no Filters button on %s", async (route) => {
+    stubFetchWithArtPieces();
+
+    renderApp(route);
+    await waitFor(() =>
+      expect(screen.queryByText(/loading/i)).not.toBeInTheDocument()
+    );
+
+    expect(
+      screen.queryByRole("button", { name: /^Filters/ })
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows a Remove filters button on the Gallery page only while a filter is active, and the button brings back all paintings", async () => {
+    const user = userEvent.setup();
+    stubFetchWithArtPieces();
+
+    renderApp("/art-pieces");
+    const search = await screen.findByRole("searchbox", { name: "Search" });
+    expect(
+      screen.queryByRole("button", { name: "Remove filters" })
+    ).not.toBeInTheDocument();
+
+    await user.type(search, "harvest");
+    expect(screen.getAllByRole("listitem")).toHaveLength(1);
+
+    await user.click(screen.getByRole("button", { name: "Remove filters" }));
+
+    expect(screen.getAllByRole("listitem")).toHaveLength(2);
+    expect(search).toHaveValue("");
+    expect(search).toHaveFocus();
+    expect(
+      screen.queryByRole("button", { name: "Remove filters" })
+    ).not.toBeInTheDocument();
+  });
+
+  it.each(["/", "/favorites"])(
+    "has no Remove filters button on %s",
+    async (route) => {
+      stubFetchWithArtPieces();
+
+      renderApp(route);
+      await waitFor(() =>
+        expect(screen.queryByText(/loading/i)).not.toBeInTheDocument()
+      );
+
+      expect(
+        screen.queryByRole("button", { name: "Remove filters" })
+      ).not.toBeInTheDocument();
+    }
+  );
+
   it("keeps comments with the art piece they were written for", async () => {
     const user = userEvent.setup();
     stubFetchWithArtPieces();
@@ -1231,7 +1508,9 @@ describe("App", () => {
 
     renderApp("/art-pieces");
 
-    const buttons = await screen.findAllByRole("button");
+    const buttons = await screen.findAllByRole("button", {
+      name: /^Favorite /,
+    });
     expect(buttons).toHaveLength(2);
     buttons.forEach((button) =>
       expect(button).toHaveAttribute("aria-pressed", "false")

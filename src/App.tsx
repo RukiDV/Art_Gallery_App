@@ -3,8 +3,8 @@ import { Route, Routes } from "react-router";
 import useSWR from "swr";
 
 import ArtPieceDetailsPage from "./components/ArtPieceDetailsPage";
-import ArtPieceList from "./components/ArtPieceList";
 import FavoritesPage from "./components/FavoritesPage";
+import GalleryPage from "./components/GalleryPage";
 import Navigation from "./components/Navigation";
 import SpotlightPage from "./components/SpotlightPage";
 import { fetcher } from "./fetcher";
@@ -140,7 +140,7 @@ export default function App() {
           <Route
             path="/art-pieces"
             element={withArtPieces((loaded) => (
-              <ArtPieceList
+              <GalleryPage
                 artPieces={loaded}
                 isFavorite={isFavorite}
                 onToggleFavorite={toggleFavorite}
