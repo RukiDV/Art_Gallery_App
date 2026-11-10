@@ -54,6 +54,7 @@ Edit history or undo, closing the form with the Escape key, editing the date, sh
 1. Save with text that equals the old text (after trimming) behaves like Cancel: no change and no "edited" label (chosen over marking it as edited).
 2. While a comment is edited, its Edit and Delete buttons are hidden and the form replaces them; the date and time stay visible. Several comments can be edited at the same time because the state is per comment.
 3. A saved `edited` value that is not a boolean makes the entry broken (the #41 and #43 rule).
+4. Added after the first look in the browser, at the user's request: the "edited" label is shown on the same line as the date and time, in the same small grey style, separated by a dot, so it no longer looks like a link. The date and the label sit in one `<p className="comment-meta">`; the label is a `<span className="comment-edited">` whose dot comes from CSS (`::before`), so its text stays exactly "edited". This is markup and CSS only: the automated tests cannot check the layout (jsdom has no layout), so it is checked in the browser, and the existing tests stay unchanged.
 
 ## Notes
 
