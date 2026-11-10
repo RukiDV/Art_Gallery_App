@@ -36,7 +36,11 @@ export default function SpotlightPage({
   return (
     <>
       <figure className="art-piece spotlight" aria-live="polite">
-        <img src={artPiece.imageSource} alt={artPiece.name} />
+        <img
+          key={artPiece.slug}
+          src={artPiece.imageSource}
+          alt={artPiece.name}
+        />
         <figcaption>
           <p>{artPiece.artist}</p>
         </figcaption>
@@ -47,22 +51,23 @@ export default function SpotlightPage({
         />
       </figure>
       {artPieces.length > 1 && (
-        <button
-          type="button"
-          onClick={() =>
-            setArtPiece(getRandomArtPiece(artPieces, artPiece.slug))
-          }
-        >
-          Show another
-        </button>
-      )}
-      {artPieces.length > 1 && (
-        <button
-          type="button"
-          onClick={() => setIsSlideshowRunning((isRunning) => !isRunning)}
-        >
-          {isSlideshowRunning ? "Stop slideshow" : "Start slideshow"}
-        </button>
+        <div className="spotlight-actions">
+          <button
+            type="button"
+            className="button-primary"
+            onClick={() =>
+              setArtPiece(getRandomArtPiece(artPieces, artPiece.slug))
+            }
+          >
+            Show another
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsSlideshowRunning((isRunning) => !isRunning)}
+          >
+            {isSlideshowRunning ? "Stop slideshow" : "Start slideshow"}
+          </button>
+        </div>
       )}
     </>
   );

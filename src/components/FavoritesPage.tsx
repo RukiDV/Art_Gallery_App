@@ -15,7 +15,7 @@ export default function FavoritesPage({
   const favorites = artPieces.filter((artPiece) => isFavorite(artPiece.slug));
 
   if (favorites.length === 0) {
-    return <p>No favorites yet</p>;
+    return <p className="status-message">No favorites yet</p>;
   }
 
   return (
