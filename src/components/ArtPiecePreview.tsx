@@ -24,6 +24,7 @@ export default function ArtPiecePreview({
             <ViewTransition
               name={`art-picture-${artPiece.slug}`}
               default="none"
+              share="auto"
             >
               <img src={artPiece.imageSource} alt={artPiece.name} />
             </ViewTransition>

@@ -49,7 +49,11 @@ export default function ArtPieceDetailsPage({
       <Link to="/art-pieces">Back</Link>
       <div className="details-card">
         <div className="details-media">
-          <ViewTransition name={`art-picture-${artPiece.slug}`} default="none">
+          <ViewTransition
+            name={`art-picture-${artPiece.slug}`}
+            default="none"
+            share="auto"
+          >
             <img src={artPiece.imageSource} alt={artPiece.name} />
           </ViewTransition>
           <FavoriteButton
