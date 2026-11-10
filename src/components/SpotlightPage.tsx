@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { getRandomArtPiece } from "../randomArtPiece";
 import type { ArtPiece } from "../types";
 import FavoriteButton from "./FavoriteButton";
+
+const SLIDE_DURATION_MS = 5000;
 
 type SpotlightPageProps = {
   artPieces: ArtPiece[];
@@ -16,10 +18,24 @@ export default function SpotlightPage({
   onToggleFavorite,
 }: SpotlightPageProps) {
   const [artPiece, setArtPiece] = useState(() => getRandomArtPiece(artPieces));
+  const [isSlideshowRunning, setIsSlideshowRunning] = useState(false);
+
+  // A new piece (by the timer or by "Show another") runs this effect again, so
+  // the 5 seconds start over. Stopping or leaving the page clears the timer.
+  useEffect(() => {
+    if (!isSlideshowRunning) {
+      return;
+    }
+    const timerId = setInterval(() => {
+      setArtPiece(getRandomArtPiece(artPieces, artPiece.slug));
+    }, SLIDE_DURATION_MS);
+
+    return () => clearInterval(timerId);
+  }, [isSlideshowRunning, artPiece, artPieces]);
 
   return (
     <>
-      <figure className="art-piece spotlight">
+      <figure className="art-piece spotlight" aria-live="polite">
         <img src={artPiece.imageSource} alt={artPiece.name} />
         <figcaption>
           <p>{artPiece.artist}</p>
@@ -38,6 +54,14 @@ export default function SpotlightPage({
           }
         >
           Show another
+        </button>
+      )}
+      {artPieces.length > 1 && (
+        <button
+          type="button"
+          onClick={() => setIsSlideshowRunning((isRunning) => !isRunning)}
+        >
+          {isSlideshowRunning ? "Stop slideshow" : "Start slideshow"}
         </button>
       )}
     </>
