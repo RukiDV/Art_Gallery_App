@@ -1014,7 +1014,7 @@ label {
   top: -1.35rem;
   right: 14%;
   left: 14%;
-  height: calc(1.35rem + 1px);
+  height: calc(1.35rem - 2px);
   pointer-events: none;
   content: "";
   background:
