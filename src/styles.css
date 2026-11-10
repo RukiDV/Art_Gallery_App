@@ -397,48 +397,112 @@ label {
   color: var(--muted-text);
 }
 
-/* Spotlight: the whole picture over a blurred, darkened copy of itself */
+/* Spotlight: a framed picture hanging in front of a blurred copy of itself */
 .spotlight {
   isolation: isolate;
   background: var(--mat);
 }
 
-.spotlight::before {
+.spotlight-backdrop {
   position: absolute;
   inset: 0;
   z-index: -1;
-  content: "";
-  background: var(--art-image) center / cover;
-  filter: blur(40px) brightness(0.55) saturate(1.2);
+  background: center / cover;
+  filter: blur(40px) brightness(0.5) saturate(1.3);
   transform: scale(1.3);
+  animation:
+    fade-in 0.9s var(--ease),
+    drift 24s ease-in-out infinite alternate;
 }
 
+.spotlight-stage {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-6) var(--space-5) var(--space-5);
+}
+
+/* Mat inside, thin dark frame outside, a glow in the painting's color */
 .spotlight img {
-  height: clamp(20rem, 62vh, 34rem);
-  padding: var(--space-5);
-  background: none;
-  filter: drop-shadow(0 12px 28px #0008);
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: clamp(18rem, 60vh, 32rem);
+  padding: var(--space-3);
+  background: #f4efe6;
+  border: 0.45rem solid #1b1815;
+  border-radius: 2px;
+  filter: none;
+  box-shadow:
+    0 0 0 1px #ffffff26,
+    0 30px 60px -10px #000000b3,
+    0 0 90px color-mix(in srgb, var(--art-glow) 70%, transparent);
   animation: fade-in 0.6s var(--ease);
 }
 
+/* The wall label: artist in serif, a line and dots in the painting's colors */
 .spotlight figcaption {
-  padding: var(--space-3) var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  align-items: center;
+  padding: var(--space-3) var(--space-5) var(--space-4);
   text-align: center;
   background: #000000a6;
+  border-top: 3px solid var(--art-glow);
 }
 
 .spotlight figcaption p {
   font-family: var(--font-heading);
-  font-size: 1.6rem;
+  font-size: 1.75rem;
   color: white;
 }
 
+.spotlight-palette {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.spotlight-swatch {
+  width: 0.9rem;
+  height: 0.9rem;
+  border: 1px solid #ffffff80;
+  border-radius: 50%;
+}
+
+/* Glass control pill with icon buttons */
 .spotlight-actions {
   display: flex;
-  flex-wrap: wrap;
   gap: var(--space-3);
-  justify-content: center;
-  margin-top: var(--space-5);
+  width: fit-content;
+  padding: var(--space-2);
+  margin: var(--space-5) auto 0;
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(12px);
+}
+
+.icon-button {
+  display: grid;
+  place-items: center;
+  width: 3.25rem;
+  height: 3.25rem;
+  padding: 0;
+}
+
+.icon-button:hover {
+  transform: scale(1.06);
+}
+
+@keyframes drift {
+  from {
+    transform: scale(1.3);
+  }
+
+  to {
+    transform: scale(1.5);
+  }
 }
 
 @keyframes fade-in {
