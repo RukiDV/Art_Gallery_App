@@ -946,17 +946,19 @@ label {
   margin: 0;
 }
 
-/* Different heights, so the wall looks hung by hand. */
-.favorites-wall .art-list li:nth-child(3n + 1) img {
-  height: 19rem;
+/* Each frame hugs its picture: the width follows the picture's shape (--ratio,
+   set when the picture loads), so that every picture gets about the same area. */
+.favorites-wall {
+  --wall-area: 270;
 }
 
-.favorites-wall .art-list li:nth-child(3n + 2) img {
-  height: 13rem;
-}
+.favorites-wall .art-piece {
+  --picture-width: calc(sqrt(var(--wall-area) * var(--ratio, 1.3)) * 1rem);
+  --frame-extra: calc(2 * var(--space-3) + 0.8rem);
 
-.favorites-wall .art-list li:nth-child(3n) img {
-  height: 16rem;
+  flex: 0 1 auto;
+  width: min(100%, calc(var(--picture-width) + var(--frame-extra)));
+  margin-inline: auto;
 }
 
 /* Dark frame and a cream mat, with a small label under the picture. */
@@ -974,9 +976,19 @@ label {
   background: var(--wall-mat);
 }
 
+.favorites-wall .card-front {
+  padding: var(--space-3) var(--space-3) 0;
+}
+
 .favorites-wall .art-piece img {
-  background: var(--wall-mat);
-  filter: drop-shadow(0 3px 6px #0004);
+  width: 100%;
+  height: auto;
+  padding: 0;
+  object-fit: cover;
+  background: none;
+  filter: none;
+  box-shadow: 0 0 0 1px #00000026;
+  aspect-ratio: var(--ratio, 1.3);
 }
 
 .favorites-wall .art-piece h2 {
@@ -989,12 +1001,8 @@ label {
   color: var(--wall-muted);
 }
 
-.favorites-wall .art-list li {
-  position: relative;
-}
-
 /* The nail ... */
-.favorites-wall .art-list li::before {
+.favorites-wall .art-card::before {
   position: absolute;
   top: -1.7rem;
   left: 50%;
@@ -1009,7 +1017,7 @@ label {
 }
 
 /* ... and the string down to the two corners of the frame. */
-.favorites-wall .art-list li::after {
+.favorites-wall .art-card::after {
   position: absolute;
   top: -1.35rem;
   right: 14%;
