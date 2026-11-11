@@ -1130,7 +1130,16 @@ label {
   );
 }
 
-.details > a {
+/* The top row: Back on the left, Previous and Next on the right. */
+.details-top {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.details-top > a {
   display: inline-flex;
   gap: var(--space-2);
   align-items: center;
@@ -1138,8 +1147,51 @@ label {
   font-weight: 500;
 }
 
-.details > a::before {
+.details-top > a::before {
   content: "←";
+}
+
+.details-browse {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.details-browse a {
+  gap: var(--space-2);
+  max-width: 100%;
+  font-size: 0.9rem;
+}
+
+.browse-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* On phones the two links share the row and long names wrap to two lines. */
+@media (width < 32rem) {
+  .details-browse {
+    flex: 1 1 100%;
+    flex-wrap: nowrap;
+  }
+
+  .details-browse a {
+    flex: 1 1 0;
+    justify-content: space-between;
+    min-width: 0;
+  }
+
+  .browse-label {
+    display: -webkit-box;
+    line-height: 1.25;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
 }
 
 /* Picture and info are one card: the mat on one side, the text on the other. */
