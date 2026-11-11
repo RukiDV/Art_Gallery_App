@@ -1,4 +1,4 @@
-import { ViewTransition } from "react";
+import { type CSSProperties, ViewTransition } from "react";
 import { Link, useParams } from "react-router";
 
 import type { ArtPiece, ArtPieceComment } from "../types";
@@ -46,7 +46,13 @@ export default function ArtPieceDetailsPage({
   }
 
   return (
-    <article className="details">
+    <article
+      className="details"
+      // The first palette color tints the glow (see styles.css).
+      style={
+        { "--art-glow": artPiece.colors[0] ?? "transparent" } as CSSProperties
+      }
+    >
       <TransitionLink to="/art-pieces">Back</TransitionLink>
       <div className="details-card">
         <div className="details-media">

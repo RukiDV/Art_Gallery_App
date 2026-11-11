@@ -301,3 +301,16 @@ describe("ArtPieceDetailsPage", () => {
     );
   });
 });
+
+describe("ArtPieceDetailsPage: glow in the painting's color", () => {
+  it.each([
+    ["wheat-field-with-cypresses", "#718F98"],
+    ["the-harvesters", "#37412E"],
+  ])("tints the page with the first palette color of %s", (slug, color) => {
+    renderDetails(slug);
+
+    expect(
+      screen.getByRole("article").style.getPropertyValue("--art-glow")
+    ).toBe(color);
+  });
+});
