@@ -1,6 +1,5 @@
 import { type CSSProperties, useState, ViewTransition } from "react";
 
-import { debugFlag } from "../debugFlags";
 import type { ArtPiece } from "../types";
 import FavoriteButton from "./FavoriteButton";
 import TransitionLink, { OPEN_DETAILS_TRANSITION } from "./TransitionLink";
@@ -28,7 +27,11 @@ export default function ArtPiecePreview({
         <div className="card-inner">
           <div className="card-front">
             {/* The same name on the details page makes the picture travel there. */}
-            {debugFlag("noVT") ? (
+            <ViewTransition
+              name={`art-picture-${artPiece.slug}`}
+              default="none"
+              share={{ [OPEN_DETAILS_TRANSITION]: "auto", default: "none" }}
+            >
               <img
                 src={artPiece.imageSource}
                 alt={artPiece.name}
@@ -41,26 +44,7 @@ export default function ArtPiecePreview({
                   }
                 }}
               />
-            ) : (
-              <ViewTransition
-                name={`art-picture-${artPiece.slug}`}
-                default="none"
-                share={{ [OPEN_DETAILS_TRANSITION]: "auto", default: "none" }}
-              >
-                <img
-                  src={artPiece.imageSource}
-                  alt={artPiece.name}
-                  onLoad={(event) => {
-                    const { naturalWidth, naturalHeight } = event.currentTarget;
-                    if (naturalWidth > 0 && naturalHeight > 0) {
-                      setRatio(
-                        Math.round((naturalWidth / naturalHeight) * 1000) / 1000
-                      );
-                    }
-                  }}
-                />
-              </ViewTransition>
-            )}
+            </ViewTransition>
             {/* Shown on touch screens only, where the card cannot flip. */}
             <span className="card-chip" aria-hidden="true">
               →
