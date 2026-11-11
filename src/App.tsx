@@ -9,6 +9,7 @@ import GallerySkeleton from "./components/GallerySkeleton";
 import GalleryPage from "./components/GalleryPage";
 import Navigation from "./components/Navigation";
 import SpotlightPage from "./components/SpotlightPage";
+import { moveFavorite } from "./favoriteOrder";
 import { fetcher } from "./fetcher";
 import { loadArtPiecesInfo, saveArtPiecesInfo } from "./storage";
 import "./styles.css";
@@ -71,6 +72,10 @@ export default function App() {
         ? [...current.filter((entry) => entry.slug !== slug), toggled]
         : current.map((entry) => (entry.slug === slug ? toggled : entry));
     });
+  }
+
+  function moveFavoriteTo(slug: string, toIndex: number) {
+    setArtPiecesInfo((current) => moveFavorite(current, slug, toIndex));
   }
 
   function addComment(slug: string, text: string) {
@@ -200,6 +205,7 @@ export default function App() {
                 isFavorite={isFavorite}
                 onToggleFavorite={toggleFavorite}
                 favoriteOrder={artPiecesInfo.map((info) => info.slug)}
+                onMoveFavorite={moveFavoriteTo}
               />
             ))}
           />

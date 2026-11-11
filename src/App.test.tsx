@@ -2091,3 +2091,144 @@ describe("App: empty favorites", () => {
     expect(screen.queryByText("No favorites yet")).not.toBeInTheDocument();
   });
 });
+
+describe("App: rearranging the favorites", () => {
+  const kiss: ArtPiece = {
+    slug: "the-kiss",
+    artist: "Gustav Klimt",
+    name: "The Kiss",
+    imageSource: "https://example.com/the-kiss.jpg",
+    year: "1908",
+    genre: "Symbolism",
+    colors: ["#C9A227"],
+  };
+
+  function stubFetchWithThreePieces() {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => [...artPieces, kiss],
+      })
+    );
+  }
+
+  function saveFavorites(...slugs: string[]) {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify(
+        slugs.map((slug) => ({ slug, isFavorite: true, comments: [] }))
+      )
+    );
+  }
+
+  function savedFavoriteOrder() {
+    const saved: { slug: string; isFavorite: boolean }[] = JSON.parse(
+      localStorage.getItem(STORAGE_KEY) ?? "[]"
+    );
+    return saved.filter((entry) => entry.isFavorite).map((entry) => entry.slug);
+  }
+
+  // The painting of every frame on the wall, from first to last.
+  function wallOrder() {
+    return screen
+      .getAllByRole("listitem")
+      .map(
+        (frame) => within(frame).getByRole("heading", { level: 2 }).textContent
+      );
+  }
+
+  it("lists the favorites in the new order after a move, and saves it", async () => {
+    stubFetchWithThreePieces();
+    saveFavorites("the-harvesters", "wheat-field-with-cypresses", "the-kiss");
+    const user = userEvent.setup();
+    renderApp("/favorites");
+
+    await user.click(await screen.findByRole("button", { name: "Arrange" }));
+    await user.click(
+      screen.getByRole("button", { name: "Move The Kiss earlier" })
+    );
+    await user.click(screen.getByRole("button", { name: "Done" }));
+
+    expect(wallOrder()).toEqual([
+      "The Harvesters",
+      "The Kiss",
+      "Wheat Field with Cypresses",
+    ]);
+    expect(savedFavoriteOrder()).toEqual([
+      "the-harvesters",
+      "the-kiss",
+      "wheat-field-with-cypresses",
+    ]);
+  });
+
+  it("shows the saved order again after a reload", async () => {
+    stubFetchWithThreePieces();
+    saveFavorites("the-kiss", "the-harvesters", "wheat-field-with-cypresses");
+
+    renderApp("/favorites");
+
+    await screen.findAllByRole("heading", { level: 2 });
+    expect(wallOrder()).toEqual([
+      "The Kiss",
+      "The Harvesters",
+      "Wheat Field with Cypresses",
+    ]);
+  });
+
+  it("still puts a new favorite at the end after the order was changed", async () => {
+    stubFetchWithThreePieces();
+    saveFavorites("wheat-field-with-cypresses", "the-harvesters");
+    const user = userEvent.setup();
+    renderApp("/favorites");
+    await user.click(await screen.findByRole("button", { name: "Arrange" }));
+    await user.click(
+      screen.getByRole("button", { name: "Move The Harvesters earlier" })
+    );
+    await user.click(screen.getByRole("button", { name: "Done" }));
+
+    await user.click(screen.getByRole("link", { name: "Gallery" }));
+    await user.click(
+      await screen.findByRole("button", { name: "Favorite The Kiss" })
+    );
+    await user.click(screen.getByRole("link", { name: /^Favorites/ }));
+
+    expect(wallOrder()).toEqual([
+      "The Harvesters",
+      "Wheat Field with Cypresses",
+      "The Kiss",
+    ]);
+  });
+
+  it("keeps the comments of a moved painting", async () => {
+    stubFetchWithThreePieces();
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify([
+        {
+          slug: "the-harvesters",
+          isFavorite: true,
+          comments: [
+            { id: "c1", text: "Lovely", date: "2026-11-11T10:00:00.000Z" },
+          ],
+        },
+        { slug: "the-kiss", isFavorite: true, comments: [] },
+      ])
+    );
+    const user = userEvent.setup();
+    renderApp("/favorites");
+    await user.click(await screen.findByRole("button", { name: "Arrange" }));
+
+    await user.click(
+      screen.getByRole("button", { name: "Move The Harvesters later" })
+    );
+
+    const saved: { slug: string; comments: unknown[] }[] = JSON.parse(
+      localStorage.getItem(STORAGE_KEY) ?? "[]"
+    );
+    expect(
+      saved.find((entry) => entry.slug === "the-harvesters")?.comments
+    ).toHaveLength(1);
+    expect(savedFavoriteOrder()).toEqual(["the-kiss", "the-harvesters"]);
+  });
+});
