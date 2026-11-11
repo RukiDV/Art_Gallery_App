@@ -314,3 +314,101 @@ describe("ArtPieceDetailsPage: glow in the painting's color", () => {
     ).toBe(color);
   });
 });
+
+describe("ArtPieceDetailsPage: large view", () => {
+  function enlargeButton(name = "Wheat Field with Cypresses") {
+    return screen.getByRole("button", { name: `Enlarge ${name}` });
+  }
+
+  it("makes the picture a button that is named Enlarge and still contains the picture", () => {
+    renderDetails("wheat-field-with-cypresses");
+
+    expect(enlargeButton()).toContainElement(
+      screen.getByRole("img", { name: "Wheat Field with Cypresses" })
+    );
+  });
+
+  it("has a decorative magnifier chip in the picture button", () => {
+    renderDetails("wheat-field-with-cypresses");
+
+    expect(enlargeButton().querySelector(".zoom-chip")).toHaveAttribute(
+      "aria-hidden",
+      "true"
+    );
+  });
+
+  it("shows no dialog until the picture is clicked", () => {
+    renderDetails("wheat-field-with-cypresses");
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it.each([
+    [
+      "wheat-field-with-cypresses",
+      "Wheat Field with Cypresses",
+      "Vincent van Gogh",
+    ],
+    ["the-harvesters", "The Harvesters", "Pieter Bruegel the Elder"],
+  ])(
+    "opens the large view of %s with its picture, title and artist",
+    async (slug, name, artist) => {
+      const user = userEvent.setup();
+      renderDetails(slug);
+
+      await user.click(enlargeButton(name));
+
+      const dialog = within(screen.getByRole("dialog", { name }));
+      expect(dialog.getByRole("img", { name })).toBeInTheDocument();
+      expect(dialog.getByText(name)).toBeInTheDocument();
+      expect(dialog.getByText(artist)).toBeInTheDocument();
+    }
+  );
+
+  it("closes with the Close button and gives the focus back to the picture button", async () => {
+    const user = userEvent.setup();
+    renderDetails("wheat-field-with-cypresses");
+    await user.click(enlargeButton());
+
+    await user.click(screen.getByRole("button", { name: "Close" }));
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(enlargeButton()).toHaveFocus();
+  });
+
+  it("closes with Escape and gives the focus back to the picture button", async () => {
+    const user = userEvent.setup();
+    renderDetails("wheat-field-with-cypresses");
+    await user.click(enlargeButton());
+
+    await user.keyboard("{Escape}");
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(enlargeButton()).toHaveFocus();
+  });
+
+  it("opens with the keyboard", async () => {
+    const user = userEvent.setup();
+    renderDetails("wheat-field-with-cypresses");
+    enlargeButton().focus();
+
+    await user.keyboard("{Enter}");
+
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+  });
+
+  it("keeps the favorite button outside of the picture button, and it still works", async () => {
+    const user = userEvent.setup();
+    const onToggleFavorite = vi.fn();
+    renderDetails("wheat-field-with-cypresses", () => false, onToggleFavorite);
+    const favorite = screen.getByRole("button", {
+      name: "Favorite Wheat Field with Cypresses",
+    });
+
+    expect(enlargeButton()).not.toContainElement(favorite);
+
+    await user.click(favorite);
+    expect(onToggleFavorite).toHaveBeenCalledWith("wheat-field-with-cypresses");
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+});
