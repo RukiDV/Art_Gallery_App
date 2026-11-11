@@ -1102,6 +1102,83 @@ label {
   width: 40%;
 }
 
+/* Text that only screen readers get. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  white-space: nowrap;
+  clip-path: inset(50%);
+}
+
+/* Favorites: Arrange mode */
+.favorites-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--space-4);
+}
+
+.arranging li {
+  position: relative;
+  cursor: grab;
+  border-radius: 4px;
+  outline: 2px dashed var(--control-border);
+  outline-offset: 0.5rem;
+  animation: none;
+}
+
+.arranging li.is-dragging {
+  cursor: grabbing;
+  opacity: 0.45;
+}
+
+.arranging li.is-drop-target {
+  outline: 3px solid var(--accent);
+}
+
+/* No flipping while the frames are being arranged. */
+.arranging .art-card:hover .card-inner,
+.arranging .art-card:has(> a:focus-visible) .card-inner {
+  transform: none;
+}
+
+.arrange-controls {
+  position: absolute;
+  top: var(--space-4);
+  left: 50%;
+  z-index: 2;
+  display: flex;
+  gap: var(--space-2);
+  transform: translateX(-50%);
+}
+
+.arrange-controls button {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  font-size: 1.1rem;
+  color: var(--favorite-icon);
+  background: color-mix(in srgb, var(--favorite-background) 85%, transparent);
+  border-color: transparent;
+  border-radius: 50%;
+  box-shadow: 0 1px 4px #0003;
+  backdrop-filter: blur(8px);
+}
+
+.arrange-controls button:hover:enabled {
+  background: var(--favorite-background);
+  transform: scale(1.1);
+}
+
+.arrange-controls button:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
 /* Details page */
 .details {
   --ambient-strength: 24%;
