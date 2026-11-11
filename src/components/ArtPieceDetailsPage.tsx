@@ -1,5 +1,5 @@
-import { type CSSProperties, useState, ViewTransition } from "react";
-import { Link, useParams } from "react-router";
+import { type CSSProperties, useEffect, useState, ViewTransition } from "react";
+import { Link, useNavigate, useParams } from "react-router";
 
 import type { ArtPiece, ArtPieceComment } from "../types";
 import ColorPalette from "./ColorPalette";
@@ -31,7 +31,40 @@ export default function ArtPieceDetailsPage({
 }: ArtPieceDetailsPageProps) {
   const { slug } = useParams();
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
-  const artPiece = artPieces.find((piece) => piece.slug === slug);
+  const navigate = useNavigate();
+  const index = artPieces.findIndex((piece) => piece.slug === slug);
+  const artPiece = artPieces[index];
+
+  // The neighbours in the order of the gallery; the ends wrap around.
+  const canBrowse = index !== -1 && artPieces.length > 1;
+  const previous = canBrowse
+    ? artPieces[(index - 1 + artPieces.length) % artPieces.length]
+    : undefined;
+  const next = canBrowse
+    ? artPieces[(index + 1) % artPieces.length]
+    : undefined;
+
+  useEffect(() => {
+    if (!previous || !next || isLightboxOpen) {
+      return;
+    }
+
+    function browseWithArrowKeys(event: KeyboardEvent) {
+      const hasModifier =
+        event.altKey || event.ctrlKey || event.metaKey || event.shiftKey;
+      if (event.defaultPrevented || hasModifier || isTyping(event.target)) {
+        return;
+      }
+      if (event.key === "ArrowLeft") {
+        navigate(`/art-pieces/${previous?.slug}`);
+      } else if (event.key === "ArrowRight") {
+        navigate(`/art-pieces/${next?.slug}`);
+      }
+    }
+
+    document.addEventListener("keydown", browseWithArrowKeys);
+    return () => document.removeEventListener("keydown", browseWithArrowKeys);
+  }, [previous, next, isLightboxOpen, navigate]);
 
   if (!artPiece) {
     return (
@@ -55,7 +88,33 @@ export default function ArtPieceDetailsPage({
         { "--art-glow": artPiece.colors[0] ?? "transparent" } as CSSProperties
       }
     >
-      <TransitionLink to="/art-pieces">Back</TransitionLink>
+      <div className="details-top">
+        <TransitionLink to="/art-pieces">Back</TransitionLink>
+        {previous && next && (
+          <div
+            className="details-browse"
+            role="group"
+            aria-label="Browse paintings"
+          >
+            <Link
+              to={`/art-pieces/${previous.slug}`}
+              className="button-link"
+              title={`Previous: ${previous.name}`}
+            >
+              <span aria-hidden="true">←</span>
+              <span className="browse-label">Previous: {previous.name}</span>
+            </Link>
+            <Link
+              to={`/art-pieces/${next.slug}`}
+              className="button-link"
+              title={`Next: ${next.name}`}
+            >
+              <span className="browse-label">Next: {next.name}</span>
+              <span aria-hidden="true">→</span>
+            </Link>
+          </div>
+        )}
+      </div>
       <div className="details-card">
         <div className="details-media">
           <button
@@ -110,7 +169,7 @@ export default function ArtPieceDetailsPage({
           onClose={() => setIsLightboxOpen(false)}
         />
       )}
-      <div className="details-comments">
+      <div className="details-comments" key={artPiece.slug}>
         <Comments
           comments={getComments(artPiece.slug)}
           onDeleteComment={(id) => onDeleteComment(artPiece.slug, id)}
@@ -121,5 +180,14 @@ export default function ArtPieceDetailsPage({
         />
       </div>
     </article>
+  );
+}
+
+// Arrow keys belong to the field while someone is typing in it.
+function isTyping(target: EventTarget | null) {
+  return (
+    target instanceof HTMLElement &&
+    (target.isContentEditable ||
+      ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName))
   );
 }

@@ -1,6 +1,6 @@
-import { render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, Route, Routes } from "react-router";
+import { MemoryRouter, Route, Routes, useLocation } from "react-router";
 
 import type { ArtPiece, ArtPieceComment } from "../types";
 import ArtPieceDetailsPage from "./ArtPieceDetailsPage";
@@ -410,5 +410,186 @@ describe("ArtPieceDetailsPage: large view", () => {
     await user.click(favorite);
     expect(onToggleFavorite).toHaveBeenCalledWith("wheat-field-with-cypresses");
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+});
+
+describe("ArtPieceDetailsPage: previous and next", () => {
+  const threePieces: ArtPiece[] = [
+    ...artPieces,
+    {
+      slug: "the-kiss",
+      artist: "Gustav Klimt",
+      name: "The Kiss",
+      imageSource: "https://example.com/the-kiss.jpg",
+      year: "1908",
+      genre: "Symbolism",
+      colors: ["#C9A227"],
+    },
+  ];
+
+  function Where() {
+    return <p data-testid="path">{useLocation().pathname}</p>;
+  }
+
+  function renderBrowse(slug: string, pieces: ArtPiece[] = threePieces) {
+    render(
+      <MemoryRouter initialEntries={[`/art-pieces/${slug}`]}>
+        <Routes>
+          <Route
+            path="/art-pieces/:slug"
+            element={
+              <>
+                <ArtPieceDetailsPage
+                  artPieces={pieces}
+                  isFavorite={() => false}
+                  onToggleFavorite={() => {}}
+                  getComments={() => []}
+                  onAddComment={() => {}}
+                  onDeleteComment={() => {}}
+                  onEditComment={() => {}}
+                />
+                <Where />
+              </>
+            }
+          />
+        </Routes>
+      </MemoryRouter>
+    );
+  }
+
+  function path() {
+    return screen.getByTestId("path").textContent;
+  }
+
+  it("offers links to the previous and the next painting", () => {
+    renderBrowse("wheat-field-with-cypresses");
+    const group = within(
+      screen.getByRole("group", { name: "Browse paintings" })
+    );
+
+    expect(
+      group.getByRole("link", { name: "Previous: The Harvesters" })
+    ).toHaveAttribute("href", "/art-pieces/the-harvesters");
+    expect(group.getByRole("link", { name: "Next: The Kiss" })).toHaveAttribute(
+      "href",
+      "/art-pieces/the-kiss"
+    );
+  });
+
+  it("wraps around: Previous of the first is the last, Next of the last is the first", () => {
+    renderBrowse("the-harvesters");
+    expect(
+      screen.getByRole("link", { name: "Previous: The Kiss" })
+    ).toHaveAttribute("href", "/art-pieces/the-kiss");
+
+    cleanup();
+    renderBrowse("the-kiss");
+    expect(
+      screen.getByRole("link", { name: "Next: The Harvesters" })
+    ).toHaveAttribute("href", "/art-pieces/the-harvesters");
+  });
+
+  it("has no browse links with only one painting", () => {
+    renderBrowse("the-harvesters", [artPieces[0]]);
+
+    expect(
+      screen.queryByRole("group", { name: "Browse paintings" })
+    ).not.toBeInTheDocument();
+  });
+
+  it("is not a navigation landmark, and hides its arrows from screen readers", () => {
+    renderBrowse("wheat-field-with-cypresses");
+
+    expect(screen.queryByRole("navigation")).not.toBeInTheDocument();
+    ["Previous: The Harvesters", "Next: The Kiss"].forEach((name) => {
+      expect(
+        screen.getByRole("link", { name }).querySelector("[aria-hidden='true']")
+      ).toBeInTheDocument();
+    });
+  });
+
+  it("shows the next painting when Next is clicked, and the previous one with Previous", async () => {
+    const user = userEvent.setup();
+    renderBrowse("wheat-field-with-cypresses");
+
+    await user.click(screen.getByRole("link", { name: "Next: The Kiss" }));
+    expect(path()).toBe("/art-pieces/the-kiss");
+    expect(
+      screen.getByRole("heading", { level: 2, name: "The Kiss" })
+    ).toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole("link", { name: "Previous: Wheat Field with Cypresses" })
+    );
+    expect(path()).toBe("/art-pieces/wheat-field-with-cypresses");
+    expect(
+      screen.getByRole("heading", {
+        level: 2,
+        name: "Wheat Field with Cypresses",
+      })
+    ).toBeInTheDocument();
+  });
+
+  it("goes to the next painting with ArrowRight and to the previous one with ArrowLeft", async () => {
+    const user = userEvent.setup();
+    renderBrowse("wheat-field-with-cypresses");
+
+    await user.keyboard("{ArrowRight}");
+    expect(path()).toBe("/art-pieces/the-kiss");
+
+    await user.keyboard("{ArrowLeft}");
+    expect(path()).toBe("/art-pieces/wheat-field-with-cypresses");
+  });
+
+  it("leaves the arrow keys alone while typing in the comment field", async () => {
+    const user = userEvent.setup();
+    renderBrowse("wheat-field-with-cypresses");
+
+    await user.type(
+      screen.getByRole("textbox", { name: "Your comment" }),
+      "ab{ArrowLeft}{ArrowRight}"
+    );
+
+    expect(path()).toBe("/art-pieces/wheat-field-with-cypresses");
+  });
+
+  it.each([
+    ["Shift", "{Shift>}{ArrowRight}{/Shift}"],
+    ["Control", "{Control>}{ArrowRight}{/Control}"],
+    ["Alt", "{Alt>}{ArrowRight}{/Alt}"],
+    ["Meta", "{Meta>}{ArrowRight}{/Meta}"],
+  ])("ignores ArrowRight together with %s", async (_name, keys) => {
+    const user = userEvent.setup();
+    renderBrowse("wheat-field-with-cypresses");
+
+    await user.keyboard(keys);
+
+    expect(path()).toBe("/art-pieces/wheat-field-with-cypresses");
+  });
+
+  it("ignores the arrow keys while the large view is open", async () => {
+    const user = userEvent.setup();
+    renderBrowse("wheat-field-with-cypresses");
+    await user.click(
+      screen.getByRole("button", { name: "Enlarge Wheat Field with Cypresses" })
+    );
+
+    await user.keyboard("{ArrowRight}");
+
+    expect(path()).toBe("/art-pieces/wheat-field-with-cypresses");
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+  });
+
+  it("starts the next painting with an empty comment field", async () => {
+    const user = userEvent.setup();
+    renderBrowse("wheat-field-with-cypresses");
+    const field = screen.getByRole("textbox", { name: "Your comment" });
+    await user.type(field, "half typed");
+
+    await user.click(screen.getByRole("link", { name: "Next: The Kiss" }));
+
+    expect(screen.getByRole("textbox", { name: "Your comment" })).toHaveValue(
+      ""
+    );
   });
 });
