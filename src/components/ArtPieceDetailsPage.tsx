@@ -57,9 +57,9 @@ export default function ArtPieceDetailsPage({
         return;
       }
       if (event.key === "ArrowLeft") {
-        navigate(`/art-pieces/${previous?.slug}`);
+        void navigate(`/art-pieces/${previous?.slug}`);
       } else if (event.key === "ArrowRight") {
-        navigate(`/art-pieces/${next?.slug}`);
+        void navigate(`/art-pieces/${next?.slug}`);
       }
     }
 

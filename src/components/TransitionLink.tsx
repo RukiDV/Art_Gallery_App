@@ -28,7 +28,8 @@ export default function TransitionLink({ to, onClick, ...props }: LinkProps) {
         event.preventDefault();
         startTransition(() => {
           addTransitionType(OPEN_DETAILS_TRANSITION);
-          navigate(to);
+          // navigate may return a promise; nothing waits for it here.
+          void navigate(to);
         });
       }}
     />
