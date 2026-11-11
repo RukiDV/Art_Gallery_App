@@ -5,6 +5,7 @@ import { filterArtPieces, getGenres } from "../filterArtPieces";
 import type { ArtPiece } from "../types";
 import ArtPieceList from "./ArtPieceList";
 import ColorFilter from "./ColorFilter";
+import EmptyFrame from "./EmptyFrame";
 import GenreFilter from "./GenreFilter";
 import SearchField from "./SearchField";
 
@@ -86,7 +87,10 @@ export default function GalleryPage({
         </div>
       )}
       {shownArtPieces.length === 0 ? (
-        <p className="status-message">No art pieces found</p>
+        <div className="status-message">
+          <EmptyFrame symbol={<MagnifierIcon />} />
+          <p>No art pieces found</p>
+        </div>
       ) : (
         <ArtPieceList
           artPieces={shownArtPieces}
@@ -95,5 +99,24 @@ export default function GalleryPage({
         />
       )}
     </>
+  );
+}
+
+function MagnifierIcon() {
+  return (
+    <svg
+      width="44"
+      height="44"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="11" cy="11" r="7" />
+      <path d="m20 20-3.5-3.5" />
+    </svg>
   );
 }

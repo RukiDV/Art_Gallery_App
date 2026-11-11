@@ -2070,3 +2070,18 @@ describe("App: loading skeleton in the gallery", () => {
     expect(skeletonCards(container)).toHaveLength(0);
   });
 });
+
+describe("App: empty favorites", () => {
+  it("leads from the empty favorites page to the gallery", async () => {
+    stubFetchWithArtPieces();
+    const user = userEvent.setup();
+    renderApp("/favorites");
+
+    await user.click(
+      await screen.findByRole("link", { name: "Browse the gallery" })
+    );
+
+    expect(await screen.findAllByRole("listitem")).toHaveLength(2);
+    expect(screen.queryByText("No favorites yet")).not.toBeInTheDocument();
+  });
+});

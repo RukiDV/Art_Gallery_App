@@ -132,3 +132,40 @@ describe("FavoritesPage: order", () => {
     ]);
   });
 });
+
+describe("FavoritesPage: empty state", () => {
+  it("shows a decorative empty frame with the message", () => {
+    renderFavorites(() => false);
+
+    expect(document.querySelector(".empty-frame")).toHaveAttribute(
+      "aria-hidden",
+      "true"
+    );
+    expect(screen.getByText("No favorites yet")).toBeInTheDocument();
+  });
+
+  it("draws a heart in the frame as an icon, not as a text character", () => {
+    renderFavorites(() => false);
+
+    const frame = document.querySelector(".empty-frame");
+    expect(frame?.querySelector("svg")).toBeInTheDocument();
+    expect(frame).toHaveTextContent("");
+  });
+
+  it("offers a link to the gallery", () => {
+    renderFavorites(() => false);
+
+    expect(
+      screen.getByRole("link", { name: "Browse the gallery" })
+    ).toHaveAttribute("href", "/art-pieces");
+  });
+
+  it("shows neither the frame nor the link when there are favorites", () => {
+    renderFavorites((slug) => slug === "the-harvesters");
+
+    expect(document.querySelector(".empty-frame")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Browse the gallery" })
+    ).not.toBeInTheDocument();
+  });
+});
