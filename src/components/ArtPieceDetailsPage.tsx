@@ -1,6 +1,7 @@
 import { type CSSProperties, useEffect, useState, ViewTransition } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 
+import { debugFlag } from "../debugFlags";
 import type { ArtPiece, ArtPieceComment } from "../types";
 import ColorPalette from "./ColorPalette";
 import CommentForm from "./CommentForm";
@@ -89,7 +90,11 @@ export default function ArtPieceDetailsPage({
       }
     >
       <div className="details-top">
-        <TransitionLink to="/art-pieces">Back</TransitionLink>
+        {debugFlag("plainBack") ? (
+          <Link to="/art-pieces">Back</Link>
+        ) : (
+          <TransitionLink to="/art-pieces">Back</TransitionLink>
+        )}
         {previous && next && (
           <div
             className="details-browse"
@@ -123,13 +128,17 @@ export default function ArtPieceDetailsPage({
             aria-label={`Enlarge ${artPiece.name}`}
             onClick={() => setIsLightboxOpen(true)}
           >
-            <ViewTransition
-              name={`art-picture-${artPiece.slug}`}
-              default="none"
-              share={{ [OPEN_DETAILS_TRANSITION]: "auto", default: "none" }}
-            >
+            {debugFlag("noVT") ? (
               <img src={artPiece.imageSource} alt={artPiece.name} />
-            </ViewTransition>
+            ) : (
+              <ViewTransition
+                name={`art-picture-${artPiece.slug}`}
+                default="none"
+                share={{ [OPEN_DETAILS_TRANSITION]: "auto", default: "none" }}
+              >
+                <img src={artPiece.imageSource} alt={artPiece.name} />
+              </ViewTransition>
+            )}
             <span className="zoom-chip" aria-hidden="true">
               <svg
                 width="20"
