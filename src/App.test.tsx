@@ -230,7 +230,10 @@ describe("App", () => {
     expect(screen.getByText("1565")).toBeInTheDocument();
     expect(screen.getByText("Renaissance")).toBeInTheDocument();
     expect(
-      screen.queryByRole("link", { name: /Wheat Field with Cypresses/ })
+      screen.queryByRole("heading", { name: "Wheat Field with Cypresses" })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("img", { name: "Wheat Field with Cypresses" })
     ).not.toBeInTheDocument();
   });
 
@@ -255,7 +258,10 @@ describe("App", () => {
     expect(await screen.findByText("1889")).toBeInTheDocument();
     expect(screen.getByText("Landscape Painting")).toBeInTheDocument();
     expect(
-      screen.queryByRole("link", { name: /The Harvesters/ })
+      screen.queryByRole("heading", { name: "The Harvesters" })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("img", { name: "The Harvesters" })
     ).not.toBeInTheDocument();
   });
 
