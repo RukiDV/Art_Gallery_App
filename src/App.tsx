@@ -5,6 +5,7 @@ import useSWR from "swr";
 import ArtPieceDetailsPage from "./components/ArtPieceDetailsPage";
 import EmptyFrame from "./components/EmptyFrame";
 import FavoritesPage from "./components/FavoritesPage";
+import GallerySkeleton from "./components/GallerySkeleton";
 import GalleryPage from "./components/GalleryPage";
 import Navigation from "./components/Navigation";
 import SpotlightPage from "./components/SpotlightPage";
@@ -113,7 +114,10 @@ export default function App() {
     }));
   }
 
-  function withArtPieces(render: (artPieces: ArtPiece[]) => ReactNode) {
+  function withArtPieces(
+    render: (artPieces: ArtPiece[]) => ReactNode,
+    loadingView?: ReactNode
+  ) {
     // SWR keeps the old error while it loads again, so a retry without data
     // must not show the error.
     const isLoadingWithoutData = isValidating && !artPieces;
@@ -132,10 +136,12 @@ export default function App() {
 
     if (!artPieces) {
       return (
-        <div className="status-message">
-          <EmptyFrame isLoading />
-          <p>Loading art pieces…</p>
-        </div>
+        loadingView ?? (
+          <div className="status-message">
+            <EmptyFrame isLoading />
+            <p>Loading art pieces…</p>
+          </div>
+        )
       );
     }
 
@@ -161,13 +167,16 @@ export default function App() {
           />
           <Route
             path="/art-pieces"
-            element={withArtPieces((loaded) => (
-              <GalleryPage
-                artPieces={loaded}
-                isFavorite={isFavorite}
-                onToggleFavorite={toggleFavorite}
-              />
-            ))}
+            element={withArtPieces(
+              (loaded) => (
+                <GalleryPage
+                  artPieces={loaded}
+                  isFavorite={isFavorite}
+                  onToggleFavorite={toggleFavorite}
+                />
+              ),
+              <GallerySkeleton />
+            )}
           />
           <Route
             path="/art-pieces/:slug"
