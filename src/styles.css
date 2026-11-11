@@ -13,6 +13,8 @@
   --circle-border: #0003;
   --control-border: #8a857c;
   --mat: #ece8df;
+  --skeleton-base: #e6e1d6;
+  --skeleton-shine: #f6f2ea;
   --wall: #e6dfd0;
   --wall-mat: #f4efe6;
   --wall-ink: #222;
@@ -64,6 +66,8 @@
   --circle-border: #fff4;
   --control-border: #7a7a88;
   --mat: #0d0d11;
+  --skeleton-base: #2a2a33;
+  --skeleton-shine: #3b3b47;
   --wall: #1c1c22;
   --wall-mat: #131318;
   --wall-ink: #ececec;
@@ -1040,6 +1044,59 @@ label {
         transparent calc(50% + 0.75px)
       )
       right / 50% 100% no-repeat;
+}
+
+/* Gallery loading: shimmering empty cards */
+.skeleton-message {
+  margin: var(--space-5) 0 0;
+  color: var(--muted-text);
+  text-align: center;
+}
+
+.skeleton-card {
+  flex: 1;
+  overflow: hidden;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    0 0 0 1px var(--card-edge, transparent),
+    var(--shadow);
+}
+
+.skeleton-picture,
+.skeleton-lines span {
+  background: linear-gradient(
+      100deg,
+      var(--skeleton-base) 30%,
+      var(--skeleton-shine) 50%,
+      var(--skeleton-base) 70%
+    )
+    0 0 / 250% 100%;
+  animation: shimmer 1.6s linear infinite;
+}
+
+.skeleton-picture {
+  height: 15rem;
+}
+
+.skeleton-lines {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-4);
+}
+
+.skeleton-lines span {
+  height: 0.9rem;
+  border-radius: 999px;
+}
+
+.skeleton-lines span:first-child {
+  width: 65%;
+  height: 1.1rem;
+}
+
+.skeleton-lines span:last-child {
+  width: 40%;
 }
 
 /* Details page */
