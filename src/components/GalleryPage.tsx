@@ -2,12 +2,14 @@ import { useId, useRef, useState } from "react";
 
 import { type ColorFamily, getColorFamilies } from "../colorFamilies";
 import { filterArtPieces, getGenres } from "../filterArtPieces";
+import { sortArtPieces, type SortOption } from "../sortArtPieces";
 import type { ArtPiece } from "../types";
 import ArtPieceList from "./ArtPieceList";
 import ColorFilter from "./ColorFilter";
 import EmptyFrame from "./EmptyFrame";
 import GenreFilter from "./GenreFilter";
 import SearchField from "./SearchField";
+import SortSelect from "./SortSelect";
 
 type GalleryPageProps = {
   artPieces: ArtPiece[];
@@ -24,6 +26,8 @@ export default function GalleryPage({
   const [genre, setGenre] = useState("");
   const [selectedFamilies, setSelectedFamilies] = useState<ColorFamily[]>([]);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
+  // Sorting is not a filter: it is not counted and "Remove filters" keeps it.
+  const [sortOption, setSortOption] = useState<SortOption>("default");
   const panelId = useId();
   const searchRef = useRef<HTMLInputElement>(null);
 
@@ -43,11 +47,9 @@ export default function GalleryPage({
     searchRef.current?.focus();
   }
 
-  const shownArtPieces = filterArtPieces(
-    artPieces,
-    query,
-    genre,
-    selectedFamilies
+  const shownArtPieces = sortArtPieces(
+    filterArtPieces(artPieces, query, genre, selectedFamilies),
+    sortOption
   );
 
   // The search text is not counted: its field is always visible.
@@ -66,6 +68,7 @@ export default function GalleryPage({
         >
           {activeFilters > 0 ? `Filters (${activeFilters})` : "Filters"}
         </button>
+        <SortSelect value={sortOption} onChange={setSortOption} />
         {hasActiveFilter && (
           <button type="button" onClick={removeFilters}>
             Remove filters

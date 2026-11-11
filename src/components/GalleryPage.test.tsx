@@ -675,3 +675,194 @@ describe("GalleryPage: empty state", () => {
     expect(frame()).not.toBeInTheDocument();
   });
 });
+
+describe("GalleryPage: sorting", () => {
+  // In the order of the API: Harvesters, Wheat Field, Starry Night, Mona Lisa.
+  const sortable: ArtPiece[] = [
+    piece({
+      slug: "the-harvesters",
+      name: "The Harvesters",
+      artist: "Pieter Bruegel the Elder",
+      year: "1565",
+      genre: "Renaissance",
+    }),
+    piece({
+      slug: "wheat-field",
+      name: "Wheat Field with Cypresses",
+      artist: "Vincent van Gogh",
+      year: "1889",
+      genre: "Landscape Painting",
+    }),
+    piece({
+      slug: "starry-night",
+      name: "The Starry Night",
+      artist: "Vincent van Gogh",
+      year: "1889",
+      genre: "Landscape Painting",
+    }),
+    piece({
+      slug: "mona-lisa",
+      name: "Mona Lisa",
+      artist: "Leonardo da Vinci",
+      year: "1503–19",
+      genre: "Renaissance",
+    }),
+  ];
+
+  function renderSortable() {
+    render(
+      <MemoryRouter>
+        <GalleryPage
+          artPieces={sortable}
+          isFavorite={() => false}
+          onToggleFavorite={() => {}}
+        />
+      </MemoryRouter>
+    );
+  }
+
+  function sortBy(user: ReturnType<typeof userEvent.setup>, label: string) {
+    return user.selectOptions(
+      screen.getByRole("combobox", { name: "Sort by" }),
+      label
+    );
+  }
+
+  it("shows the Sort by dropdown at the start, without opening the filters, on the default order", () => {
+    renderSortable();
+
+    expect(
+      screen.getByRole("option", { name: "Default order", selected: true })
+    ).toBeInTheDocument();
+    expect(shownTitles()).toEqual([
+      "The Harvesters",
+      "Wheat Field with Cypresses",
+      "The Starry Night",
+      "Mona Lisa",
+    ]);
+  });
+
+  it.each([
+    [
+      "Name (A–Z)",
+      [
+        "Mona Lisa",
+        "The Harvesters",
+        "The Starry Night",
+        "Wheat Field with Cypresses",
+      ],
+    ],
+    [
+      "Artist (A–Z)",
+      [
+        "Mona Lisa",
+        "The Harvesters",
+        "Wheat Field with Cypresses",
+        "The Starry Night",
+      ],
+    ],
+    [
+      "Year (oldest first)",
+      [
+        "Mona Lisa",
+        "The Harvesters",
+        "Wheat Field with Cypresses",
+        "The Starry Night",
+      ],
+    ],
+    [
+      "Year (newest first)",
+      [
+        "Wheat Field with Cypresses",
+        "The Starry Night",
+        "The Harvesters",
+        "Mona Lisa",
+      ],
+    ],
+  ])("sorts by %s", async (label, expected) => {
+    const user = userEvent.setup();
+    renderSortable();
+
+    await sortBy(user, label);
+
+    expect(shownTitles()).toEqual(expected);
+  });
+
+  it("goes back to the default order", async () => {
+    const user = userEvent.setup();
+    renderSortable();
+    await sortBy(user, "Name (A–Z)");
+
+    await sortBy(user, "Default order");
+
+    expect(shownTitles()[0]).toBe("The Harvesters");
+  });
+
+  it("sorts only the paintings that a search leaves", async () => {
+    const user = userEvent.setup();
+    renderSortable();
+
+    await user.type(
+      screen.getByRole("searchbox", { name: "Search" }),
+      "Vincent"
+    );
+    expect(shownTitles()).toEqual([
+      "Wheat Field with Cypresses",
+      "The Starry Night",
+    ]);
+
+    await sortBy(user, "Name (A–Z)");
+    expect(shownTitles()).toEqual([
+      "The Starry Night",
+      "Wheat Field with Cypresses",
+    ]);
+  });
+
+  it("sorts only the paintings that a genre leaves", async () => {
+    const user = userEvent.setup();
+    renderSortable();
+    await openFilters(user);
+    await user.selectOptions(
+      screen.getByRole("combobox", { name: "Genre" }),
+      "Renaissance"
+    );
+
+    await sortBy(user, "Year (oldest first)");
+
+    expect(shownTitles()).toEqual(["Mona Lisa", "The Harvesters"]);
+  });
+
+  it("keeps the chosen order when the filters are removed", async () => {
+    const user = userEvent.setup();
+    renderSortable();
+    await user.type(
+      screen.getByRole("searchbox", { name: "Search" }),
+      "Vincent"
+    );
+    await sortBy(user, "Name (A–Z)");
+
+    await user.click(screen.getByRole("button", { name: "Remove filters" }));
+
+    expect(shownTitles()).toEqual([
+      "Mona Lisa",
+      "The Harvesters",
+      "The Starry Night",
+      "Wheat Field with Cypresses",
+    ]);
+    expect(
+      screen.getByRole("option", { name: "Name (A–Z)", selected: true })
+    ).toBeInTheDocument();
+  });
+
+  it("does not count as a filter", async () => {
+    const user = userEvent.setup();
+    renderSortable();
+
+    await sortBy(user, "Artist (A–Z)");
+
+    expect(screen.getByRole("button", { name: "Filters" })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Remove filters" })
+    ).not.toBeInTheDocument();
+  });
+});
