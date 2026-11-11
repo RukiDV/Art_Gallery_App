@@ -635,3 +635,43 @@ describe("GalleryPage color filter", () => {
     expect(screen.getByRole("searchbox", { name: "Search" })).toHaveFocus();
   });
 });
+
+describe("GalleryPage: empty state", () => {
+  function frame() {
+    return document.querySelector(".empty-frame");
+  }
+
+  it("shows a decorative empty frame with a magnifier icon when nothing matches", async () => {
+    const user = userEvent.setup();
+    renderGallery();
+
+    await user.type(
+      screen.getByRole("searchbox", { name: "Search" }),
+      "nothing like this"
+    );
+
+    expect(frame()).toHaveAttribute("aria-hidden", "true");
+    expect(frame()?.querySelector("svg")).toBeInTheDocument();
+    expect(screen.getByText("No art pieces found")).toBeInTheDocument();
+  });
+
+  it("keeps the single Remove filters button, which brings the pieces back", async () => {
+    const user = userEvent.setup();
+    renderGallery();
+    await user.type(
+      screen.getByRole("searchbox", { name: "Search" }),
+      "nothing like this"
+    );
+
+    await user.click(screen.getByRole("button", { name: "Remove filters" }));
+
+    expect(frame()).not.toBeInTheDocument();
+    expect(screen.getAllByRole("listitem")).toHaveLength(4);
+  });
+
+  it("shows no frame while pieces are listed", () => {
+    renderGallery();
+
+    expect(frame()).not.toBeInTheDocument();
+  });
+});
