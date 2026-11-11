@@ -2027,3 +2027,46 @@ describe("App: order of the favorites", () => {
     ]);
   });
 });
+
+describe("App: loading skeleton in the gallery", () => {
+  function skeletonCards(container: HTMLElement) {
+    return container.querySelectorAll(".skeleton-card");
+  }
+
+  it("shows six placeholder cards and the loading message while the gallery loads", () => {
+    stubFetchWithOutcomes("never finishes");
+
+    const { container } = renderApp("/art-pieces");
+
+    expect(skeletonCards(container)).toHaveLength(6);
+    expect(screen.getByText(/loading/i)).toBeInTheDocument();
+  });
+
+  it("hides the placeholder cards from screen readers", () => {
+    stubFetchWithOutcomes("never finishes");
+
+    const { container } = renderApp("/art-pieces");
+
+    expect(
+      skeletonCards(container)[0].closest("[aria-hidden]")
+    ).toHaveAttribute("aria-hidden", "true");
+    expect(screen.queryAllByRole("listitem")).toHaveLength(0);
+  });
+
+  it("shows no placeholder cards on the other pages while they load", () => {
+    stubFetchWithOutcomes("never finishes");
+
+    const { container } = renderApp("/");
+
+    expect(skeletonCards(container)).toHaveLength(0);
+  });
+
+  it("replaces the placeholder cards with the art pieces once they are loaded", async () => {
+    stubFetchWithOutcomes("works");
+
+    const { container } = renderApp("/art-pieces");
+
+    expect(await screen.findAllByRole("listitem")).toHaveLength(2);
+    expect(skeletonCards(container)).toHaveLength(0);
+  });
+});
