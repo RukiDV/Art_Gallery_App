@@ -1,6 +1,7 @@
 import { type CSSProperties, useEffect, useState, ViewTransition } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 
+import { isFirefox } from "../browser";
 import type { ArtPiece, ArtPieceComment } from "../types";
 import ColorPalette from "./ColorPalette";
 import CommentForm from "./CommentForm";
@@ -89,7 +90,14 @@ export default function ArtPieceDetailsPage({
       }
     >
       <div className="details-top">
-        <TransitionLink to="/art-pieces">Back</TransitionLink>
+        {/* Firefox crashes when the picture glides back to the gallery, so it gets a
+            plain link; other browsers keep the glide. Opening a card still glides
+            everywhere. Remove this once Firefox has fixed the bug. */}
+        {isFirefox() ? (
+          <Link to="/art-pieces">Back</Link>
+        ) : (
+          <TransitionLink to="/art-pieces">Back</TransitionLink>
+        )}
         {previous && next && (
           <div
             className="details-browse"
